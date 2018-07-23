@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Engines;
@@ -68,9 +70,9 @@ namespace LazyProxy.Unity.Benchmarks
         }
 
         [Benchmark]
-        public void InvokeMethod()
+        public int InvokeMethod()
         {
-            _service.Method1();
+            return _service.Method();
         }
 
         [GlobalSetup(Target = nameof(InvokeLazyMethodFirstTime))]
@@ -81,9 +83,9 @@ namespace LazyProxy.Unity.Benchmarks
         }
 
         [Benchmark]
-        public void InvokeLazyMethodFirstTime()
+        public int InvokeLazyMethodFirstTime()
         {
-            _service.Method1();
+            return _service.Method();
         }
 
         [GlobalSetup(Target = nameof(InvokeLazyMethodSecondTime))]
@@ -91,134 +93,36 @@ namespace LazyProxy.Unity.Benchmarks
         {
             _container = BuildContainerWithLazyProxy();
             _service = _container.Resolve<ITestService>();
-            _service.Method1();
+            _service.Method();
         }
 
         [Benchmark]
-        public void InvokeLazyMethodSecondTime()
+        public int InvokeLazyMethodSecondTime()
         {
-            _service.Method1();
+            return _service.Method();
         }
 
         private static IUnityContainer BuildContainerWithoutLazyProxy() =>
-            new UnityContainer()
-                .RegisterType<ITestService, TestService>()
-                .RegisterType<IInnerService1, InnerService1>()
-                .RegisterType<IInnerService2, InnerService2>()
-                .RegisterType<IInnerService3, InnerService3>()
-                .RegisterType<IInnerService4, InnerService4>()
-                .RegisterType<IInnerService5, InnerService5>()
-                .RegisterType<IInnerService6, InnerService6>()
-                .RegisterType<IInnerService7, InnerService7>()
-                .RegisterType<IInnerService8, InnerService8>()
-                .RegisterType<IInnerService9, InnerService9>()
-                .RegisterType<IInnerService10, InnerService10>();
+            new UnityContainer().RegisterType<ITestService, TestService>();
 
         private static IUnityContainer BuildContainerWithLazyProxy() =>
-            new UnityContainer()
-                .RegisterLazy<ITestService, TestService>()
-                .RegisterType<IInnerService1, InnerService1>()
-                .RegisterType<IInnerService2, InnerService2>()
-                .RegisterType<IInnerService3, InnerService3>()
-                .RegisterType<IInnerService4, InnerService4>()
-                .RegisterType<IInnerService5, InnerService5>()
-                .RegisterType<IInnerService6, InnerService6>()
-                .RegisterType<IInnerService7, InnerService7>()
-                .RegisterType<IInnerService8, InnerService8>()
-                .RegisterType<IInnerService9, InnerService9>()
-                .RegisterType<IInnerService10, InnerService10>();
+            new UnityContainer().RegisterLazy<ITestService, TestService>();
     }
 
     public interface ITestService
     {
-        void Method1();
-        void Method2();
-        void Method3();
-        void Method4();
-        void Method5();
-        void Method6();
-        void Method7();
-        void Method8();
-        void Method9();
-        void Method10();
+        int Method();
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class TestService : ITestService
     {
-        private readonly IInnerService1 _service1;
-        private readonly IInnerService1 _service2;
-        private readonly IInnerService1 _service3;
-        private readonly IInnerService1 _service4;
-        private readonly IInnerService1 _service5;
-        private readonly IInnerService1 _service6;
-        private readonly IInnerService1 _service7;
-        private readonly IInnerService1 _service8;
-        private readonly IInnerService1 _service9;
-        private readonly IInnerService1 _service10;
-
-        public TestService(
-            IInnerService1 service1,
-            IInnerService1 service2,
-            IInnerService1 service3,
-            IInnerService1 service4,
-            IInnerService1 service5,
-            IInnerService1 service6,
-            IInnerService1 service7,
-            IInnerService1 service8,
-            IInnerService1 service9,
-            IInnerService1 service10)
+        public TestService()
         {
-            _service1 = service1;
-            _service2 = service2;
-            _service3 = service3;
-            _service4 = service4;
-            _service5 = service5;
-            _service6 = service6;
-            _service7 = service7;
-            _service8 = service8;
-            _service9 = service9;
-            _service10 = service10;
+            // Emulate some hard work (e.g. other services resolving).
+            Thread.Sleep(1);
         }
 
-        public void Method1() { }
-        public void Method2() { }
-        public void Method3() { }
-        public void Method4() { }
-        public void Method5() { }
-        public void Method6() { }
-        public void Method7() { }
-        public void Method8() { }
-        public void Method9() { }
-        public void Method10() { }
+        public int Method() => Thread.CurrentThread.ManagedThreadId;
     }
-
-    public interface IInnerService1 { }
-    public class InnerService1 : IInnerService1 { }
-
-    public interface IInnerService2 { }
-    public class InnerService2 : IInnerService2 { }
-
-    public interface IInnerService3 { }
-    public class InnerService3 : IInnerService3 { }
-
-    public interface IInnerService4 { }
-    public class InnerService4 : IInnerService4 { }
-
-    public interface IInnerService5 { }
-    public class InnerService5 : IInnerService5 { }
-
-    public interface IInnerService6 { }
-    public class InnerService6 : IInnerService6 { }
-
-    public interface IInnerService7 { }
-    public class InnerService7 : IInnerService7 { }
-
-    public interface IInnerService8 { }
-    public class InnerService8 : IInnerService8 { }
-
-    public interface IInnerService9 { }
-    public class InnerService9 : IInnerService9 { }
-
-    public interface IInnerService10 { }
-    public class InnerService10 : IInnerService10 { }
 }

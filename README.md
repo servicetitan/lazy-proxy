@@ -88,21 +88,30 @@ Here is a result of the [Benchmark test](https://github.com/servicetitan/lazy-pr
 ```
 BenchmarkDotNet=v0.10.14, OS=Windows 10.0.17134
 Intel Core i5-6600K CPU 3.50GHz (Skylake), 1 CPU, 4 logical and 4 physical cores
-Frequency=3421878 Hz, Resolution=292.2372 ns, Timer=TSC
-  [Host]     : .NET Framework 4.7.1 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3131.0
-  Job-XLQBSP : .NET Framework 4.7.1 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3131.0
+Frequency=3421881 Hz, Resolution=292.2369 ns, Timer=TSC
+.NET Core SDK=2.1.104
+  [Host]     : .NET Core 2.0.6 (CoreCLR 4.6.26212.01, CoreFX 4.6.26212.01), 64bit RyuJIT
+  Job-LNUHGS : .NET Framework 4.7.1 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3131.0
+  Job-MRUQFJ : .NET Core 2.0.6 (CoreCLR 4.6.26212.01, CoreFX 4.6.26212.01), 64bit RyuJIT
 
 RunStrategy=ColdStart  
 
-                     Method |       Mean |        Error |      StdDev |
---------------------------- |-----------:|-------------:|------------:|
-               RegisterType | 312.662 us | 1,014.060 us | 2,989.98 us |
-               RegisterLazy | 460.423 us | 1,483.892 us | 4,375.29 us |
-                ResolveType | 463.465 us | 1,552.554 us | 4,577.74 us |
-                ResolveLazy | 363.829 us | 1,223.447 us | 3,607.36 us |
-               InvokeMethod |   3.188 us |    10.095 us |    29.76 us |
-  InvokeLazyMethodFirstTime |  94.673 us |   319.856 us |   943.10 us |
- InvokeLazyMethodSecondTime |   3.218 us |     9.952 us |    29.34 us |
+                     Method | Runtime |         Mean |       Error |      StdDev |
+--------------------------- |-------- |-------------:|------------:|------------:|
+               RegisterType |     Clr |   420.921 us | 1,380.15 us | 4,069.41 us |
+               RegisterLazy |     Clr |   717.123 us | 2,343.60 us | 6,910.14 us |
+                ResolveType |     Clr | 1,728.152 us | 1,159.80 us | 3,419.69 us |
+                ResolveLazy |     Clr |   398.445 us | 1,329.19 us | 3,919.15 us |
+               InvokeMethod |     Clr |     3.542 us |    11.39 us |    33.59 us |
+  InvokeLazyMethodFirstTime |     Clr |    65.259 us |   220.09 us |   648.93 us |
+ InvokeLazyMethodSecondTime |     Clr |     3.329 us |    10.30 us |    30.36 us |
+               RegisterType |    Core |   264.074 us |   818.77 us | 2,414.16 us |
+               RegisterLazy |    Core |   480.817 us | 1,527.39 us | 4,503.55 us |
+                ResolveType |    Core | 1,937.475 us | 1,679.42 us | 4,951.80 us |
+                ResolveLazy |    Core |   484.272 us | 1,618.87 us | 4,773.26 us |
+               InvokeMethod |    Core |     4.907 us |    15.25 us |    44.97 us |
+  InvokeLazyMethodFirstTime |    Core |    67.729 us |   227.56 us |   670.97 us |
+ InvokeLazyMethodSecondTime |    Core |     4.173 us |    12.04 us |    35.50 us |
 
 // * Legends *
   Mean   : Arithmetic mean of all measurements
