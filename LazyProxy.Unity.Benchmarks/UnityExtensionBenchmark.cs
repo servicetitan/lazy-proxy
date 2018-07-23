@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -10,15 +9,27 @@ using Unity;
 
 namespace LazyProxy.Unity.Benchmarks
 {
-    [Config(typeof(Config))]
+    [Config(typeof(BenchmarkConfig))]
     public class UnityExtensionBenchmark
     {
-        private class Config : ManualConfig
+        private class BenchmarkConfig : ManualConfig
         {
-            public Config()
+            public BenchmarkConfig()
             {
-                Add(Job.Default.With(RunStrategy.ColdStart).With(Runtime.Clr));
-                Add(Job.Default.With(RunStrategy.ColdStart).With(Runtime.Core));
+                Add(Job.Default.With(RunStrategy.ColdStart)
+                    .With(Runtime.Clr)
+                    .WithTargetCount(1)
+                    .WithInvocationCount(1)
+                    .WithLaunchCount(10)
+                );
+
+                Add(Job.Default.With(RunStrategy.ColdStart)
+                    .With(Runtime.Core)
+                    .WithTargetCount(1)
+                    .WithInvocationCount(1)
+                    .WithLaunchCount(10)
+                );
+
                 Add(DefaultConfig.Instance.GetColumnProviders().ToArray());
             }
         }
@@ -26,38 +37,70 @@ namespace LazyProxy.Unity.Benchmarks
         private IUnityContainer _container;
         private ITestService _service;
 
+        [GlobalSetup(Target = nameof(RegisterType) + "," + nameof(RegisterLazy))]
+        public void GlobalSetupForRegistrationBenchmarks()
+        {
+            _container = new UnityContainer();
+        }
+
         [Benchmark]
         public IUnityContainer RegisterType()
         {
-            return new UnityContainer().RegisterType<ITestService, TestService>();
+            return _container.RegisterType<ITestService, TestService>();
         }
 
         [Benchmark]
         public IUnityContainer RegisterLazy()
         {
-            return new UnityContainer().RegisterLazy<ITestService, TestService>();
+            return _container.RegisterLazy<ITestService, TestService>();
         }
 
-        [GlobalSetup(Target = nameof(ResolveType))]
-        public void GlobalSetupForResolveType()
+        [GlobalSetup(Target = nameof(ColdResolveType))]
+        public void GlobalSetupForColdResolveType()
         {
-            _container = BuildContainerWithoutLazyProxy();
+            _container = new UnityContainer().RegisterType<ITestService, TestService>();
         }
 
         [Benchmark]
-        public ITestService ResolveType()
+        public ITestService ColdResolveType()
         {
             return _container.Resolve<ITestService>();
         }
 
-        [GlobalSetup(Target = nameof(ResolveLazy))]
-        public void GlobalSetupForResolveLazy()
+        [GlobalSetup(Target = nameof(ColdResolveLazy))]
+        public void GlobalSetupForColdResolveLazy()
         {
-            _container = BuildContainerWithLazyProxy();
+            _container = new UnityContainer().RegisterLazy<ITestService, TestService>();
         }
 
         [Benchmark]
-        public ITestService ResolveLazy()
+        public ITestService ColdResolveLazy()
+        {
+            return _container.Resolve<ITestService>();
+        }
+
+        [GlobalSetup(Target = nameof(HotResolveType))]
+        public void GlobalSetupForHotResolveType()
+        {
+            _container = new UnityContainer().RegisterType<ITestService, TestService>();
+            _container.Resolve<ITestService>();
+        }
+
+        [Benchmark]
+        public ITestService HotResolveType()
+        {
+            return _container.Resolve<ITestService>();
+        }
+
+        [GlobalSetup(Target = nameof(HotResolveLazy))]
+        public void GlobalSetupForHotResolveLazy()
+        {
+            _container = new UnityContainer().RegisterLazy<ITestService, TestService>();
+            _container.Resolve<ITestService>();
+        }
+
+        [Benchmark]
+        public ITestService HotResolveLazy()
         {
             return _container.Resolve<ITestService>();
         }
@@ -65,8 +108,9 @@ namespace LazyProxy.Unity.Benchmarks
         [GlobalSetup(Target = nameof(InvokeMethod))]
         public void GlobalSetupForInvokeMethod()
         {
-            _container = BuildContainerWithoutLazyProxy();
-            _service = _container.Resolve<ITestService>();
+            _service = new UnityContainer()
+                .RegisterType<ITestService, TestService>()
+                .Resolve<ITestService>();
         }
 
         [Benchmark]
@@ -78,8 +122,9 @@ namespace LazyProxy.Unity.Benchmarks
         [GlobalSetup(Target = nameof(InvokeLazyMethodFirstTime))]
         public void GlobalSetupForInvokeLazyMethodFirstTime()
         {
-            _container = BuildContainerWithLazyProxy();
-            _service = _container.Resolve<ITestService>();
+            _service = new UnityContainer()
+                .RegisterLazy<ITestService, TestService>()
+                .Resolve<ITestService>();
         }
 
         [Benchmark]
@@ -91,8 +136,10 @@ namespace LazyProxy.Unity.Benchmarks
         [GlobalSetup(Target = nameof(InvokeLazyMethodSecondTime))]
         public void GlobalSetupForInvokeLazyMethodSecondTime()
         {
-            _container = BuildContainerWithLazyProxy();
-            _service = _container.Resolve<ITestService>();
+            _service = new UnityContainer()
+                .RegisterLazy<ITestService, TestService>()
+                .Resolve<ITestService>();
+
             _service.Method();
         }
 
@@ -101,12 +148,6 @@ namespace LazyProxy.Unity.Benchmarks
         {
             return _service.Method();
         }
-
-        private static IUnityContainer BuildContainerWithoutLazyProxy() =>
-            new UnityContainer().RegisterType<ITestService, TestService>();
-
-        private static IUnityContainer BuildContainerWithLazyProxy() =>
-            new UnityContainer().RegisterLazy<ITestService, TestService>();
     }
 
     public interface ITestService
@@ -117,12 +158,15 @@ namespace LazyProxy.Unity.Benchmarks
     // ReSharper disable once ClassNeverInstantiated.Global
     public class TestService : ITestService
     {
+        private readonly int _threadId;
+
         public TestService()
         {
             // Emulate some hard work (e.g. other services resolving).
-            Thread.Sleep(1);
+            Thread.Sleep(10);
+            _threadId = Thread.CurrentThread.ManagedThreadId;
         }
 
-        public int Method() => Thread.CurrentThread.ManagedThreadId;
+        public int Method() => _threadId;
     }
 }

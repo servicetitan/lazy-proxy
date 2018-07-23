@@ -91,27 +91,32 @@ Intel Core i5-6600K CPU 3.50GHz (Skylake), 1 CPU, 4 logical and 4 physical cores
 Frequency=3421881 Hz, Resolution=292.2369 ns, Timer=TSC
 .NET Core SDK=2.1.104
   [Host]     : .NET Core 2.0.6 (CoreCLR 4.6.26212.01, CoreFX 4.6.26212.01), 64bit RyuJIT
-  Job-LNUHGS : .NET Framework 4.7.1 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3131.0
-  Job-MRUQFJ : .NET Core 2.0.6 (CoreCLR 4.6.26212.01, CoreFX 4.6.26212.01), 64bit RyuJIT
+  Job-WRIASW : .NET Framework 4.7.1 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3131.0
+  Job-AHTPGH : .NET Core 2.0.6 (CoreCLR 4.6.26212.01, CoreFX 4.6.26212.01), 64bit RyuJIT
 
-RunStrategy=ColdStart  
+InvocationCount=1  LaunchCount=10  RunStrategy=ColdStart  TargetCount=1 
+  
 
-                     Method | Runtime |         Mean |       Error |      StdDev |
---------------------------- |-------- |-------------:|------------:|------------:|
-               RegisterType |     Clr |   420.921 us | 1,380.15 us | 4,069.41 us |
-               RegisterLazy |     Clr |   717.123 us | 2,343.60 us | 6,910.14 us |
-                ResolveType |     Clr | 1,728.152 us | 1,159.80 us | 3,419.69 us |
-                ResolveLazy |     Clr |   398.445 us | 1,329.19 us | 3,919.15 us |
-               InvokeMethod |     Clr |     3.542 us |    11.39 us |    33.59 us |
-  InvokeLazyMethodFirstTime |     Clr |    65.259 us |   220.09 us |   648.93 us |
- InvokeLazyMethodSecondTime |     Clr |     3.329 us |    10.30 us |    30.36 us |
-               RegisterType |    Core |   264.074 us |   818.77 us | 2,414.16 us |
-               RegisterLazy |    Core |   480.817 us | 1,527.39 us | 4,503.55 us |
-                ResolveType |    Core | 1,937.475 us | 1,679.42 us | 4,951.80 us |
-                ResolveLazy |    Core |   484.272 us | 1,618.87 us | 4,773.26 us |
-               InvokeMethod |    Core |     4.907 us |    15.25 us |    44.97 us |
-  InvokeLazyMethodFirstTime |    Core |    67.729 us |   227.56 us |   670.97 us |
- InvokeLazyMethodSecondTime |    Core |     4.173 us |    12.04 us |    35.50 us |
+                     Method | Runtime |        Mean |        Error |      StdDev |
+--------------------------- |-------- |------------:|-------------:|------------:|
+               RegisterType |     Clr |  4,137.7 us |    413.30 us |   273.37 us |
+               RegisterLazy |     Clr | 20,674.2 us |  8,720.50 us | 5,768.07 us |
+            ColdResolveType |     Clr | 46,964.2 us |  7,248.30 us | 4,794.30 us |
+            ColdResolveLazy |     Clr | 45,114.7 us | 14,851.68 us | 9,823.47 us |
+             HotResolveType |     Clr | 11,071.5 us |    537.94 us |   355.81 us |
+             HotResolveLazy |     Clr |    459.6 us |     81.59 us |    53.97 us |
+               InvokeMethod |     Clr |    360.1 us |    104.89 us |    69.38 us |
+  InvokeLazyMethodFirstTime |     Clr | 16,164.2 us |    725.08 us |   479.60 us |
+ InvokeLazyMethodSecondTime |     Clr |    315.4 us |     53.41 us |    35.33 us |
+               RegisterType |    Core |  3,687.9 us |    395.56 us |   261.64 us |
+               RegisterLazy |    Core | 17,750.2 us |  7,664.41 us | 5,069.54 us |
+            ColdResolveType |    Core | 50,519.3 us |  2,217.58 us | 1,466.79 us |
+            ColdResolveLazy |    Core | 46,829.4 us |  1,848.44 us | 1,222.63 us |
+             HotResolveType |    Core | 10,911.2 us |    542.79 us |   359.02 us |
+             HotResolveLazy |    Core |    471.4 us |     47.37 us |    31.34 us |
+               InvokeMethod |    Core |    333.8 us |     23.26 us |    15.39 us |
+  InvokeLazyMethodFirstTime |    Core | 16,226.2 us |    527.92 us |   349.18 us |
+ InvokeLazyMethodSecondTime |    Core |    336.4 us |     68.45 us |    45.28 us |
 
 // * Legends *
   Mean   : Arithmetic mean of all measurements
