@@ -1,10 +1,10 @@
 ﻿using System;
 using Moq;
-using NUnit.Framework;
 using Unity;
 using Unity.Exceptions;
 using Unity.Injection;
 using Unity.Lifetime;
+using Xunit;
 
 namespace LazyProxy.Unity.Tests
 {
@@ -57,7 +57,7 @@ namespace LazyProxy.Unity.Tests
             public string Method(string arg) => "service2->" + arg;
         }
 
-        [Test]
+        [Fact]
         public void ServiceCtorMustBeExecutedAfterMethodIsCalledAndOnlyOnce()
         {
             _service1Id = string.Empty;
@@ -68,26 +68,26 @@ namespace LazyProxy.Unity.Tests
                 .RegisterType<IService2, Service2>()
                 .Resolve<IService1>();
 
-            Assert.IsEmpty(_service1Id);
-            Assert.IsEmpty(_service2Id);
+            Assert.Empty(_service1Id);
+            Assert.Empty(_service2Id);
 
             var result1 = service.MethodWithoutOtherServiceInvocation();
 
-            Assert.AreEqual("service1", result1);
-            Assert.IsNotEmpty(_service1Id);
-            Assert.IsNotEmpty(_service2Id);
+            Assert.Equal("service1", result1);
+            Assert.NotEmpty(_service1Id);
+            Assert.NotEmpty(_service2Id);
 
             var prevService1Id = _service1Id;
             var prevService2Id = _service2Id;
 
             var result2 = service.MethodWithoutOtherServiceInvocation();
 
-            Assert.AreEqual("service1", result2);
-            Assert.AreEqual(prevService1Id, _service1Id);
-            Assert.AreEqual(prevService2Id, _service2Id);
+            Assert.Equal("service1", result2);
+            Assert.Equal(prevService1Id, _service1Id);
+            Assert.Equal(prevService2Id, _service2Id);
         }
 
-        [Test]
+        [Fact]
         public void ServiceCtorMustBeExecutedAfterPropertyGetterIsCalled()
         {
             _service1Id = string.Empty;
@@ -98,17 +98,17 @@ namespace LazyProxy.Unity.Tests
                 .RegisterType<IService2, Service2>()
                 .Resolve<IService1>();
 
-            Assert.IsEmpty(_service1Id);
-            Assert.IsEmpty(_service2Id);
+            Assert.Empty(_service1Id);
+            Assert.Empty(_service2Id);
 
             var result = service.Property;
 
-            Assert.AreEqual("property", result);
-            Assert.IsNotEmpty(_service1Id);
-            Assert.IsNotEmpty(_service2Id);
+            Assert.Equal("property", result);
+            Assert.NotEmpty(_service1Id);
+            Assert.NotEmpty(_service2Id);
         }
 
-        [Test]
+        [Fact]
         public void ServiceCtorMustBeExecutedAfterPropertySetterIsCalled()
         {
             _service1Id = string.Empty;
@@ -119,16 +119,16 @@ namespace LazyProxy.Unity.Tests
                 .RegisterType<IService2, Service2>()
                 .Resolve<IService1>();
 
-            Assert.IsEmpty(_service1Id);
-            Assert.IsEmpty(_service2Id);
+            Assert.Empty(_service1Id);
+            Assert.Empty(_service2Id);
 
             service.Property = "newProperty";
 
-            Assert.IsNotEmpty(_service1Id);
-            Assert.IsNotEmpty(_service2Id);
+            Assert.NotEmpty(_service1Id);
+            Assert.NotEmpty(_service2Id);
         }
 
-        [Test]
+        [Fact]
         public void ServiceCtorMustBeExecutedAfterMethodIsCalledForAllNestedLazyTypes()
         {
             _service1Id = string.Empty;
@@ -139,22 +139,22 @@ namespace LazyProxy.Unity.Tests
                 .RegisterLazy<IService2, Service2>()
                 .Resolve<IService1>();
 
-            Assert.IsEmpty(_service1Id);
-            Assert.IsEmpty(_service2Id);
+            Assert.Empty(_service1Id);
+            Assert.Empty(_service2Id);
 
             var result1 = service.MethodWithoutOtherServiceInvocation();
 
-            Assert.AreEqual("service1", result1);
-            Assert.IsNotEmpty(_service1Id);
-            Assert.IsEmpty(_service2Id);
+            Assert.Equal("service1", result1);
+            Assert.NotEmpty(_service1Id);
+            Assert.Empty(_service2Id);
 
             var result2 = service.MethodWithOtherServiceInvocation("test");
-            Assert.AreEqual("service1->service2->test", result2);
-            Assert.IsNotEmpty(_service1Id);
-            Assert.IsNotEmpty(_service2Id);
+            Assert.Equal("service1->service2->test", result2);
+            Assert.NotEmpty(_service1Id);
+            Assert.NotEmpty(_service2Id);
         }
 
-        [Test]
+        [Fact]
         public void LifetimeMustBeCorrect()
         {
             _service1Id = string.Empty;
@@ -164,24 +164,24 @@ namespace LazyProxy.Unity.Tests
                 .RegisterLazy<IService1, Service1>(() => new SingletonLifetimeManager())
                 .RegisterLazy<IService2, Service2>(() => new SingletonLifetimeManager());
 
-            Assert.IsEmpty(_service1Id);
-            Assert.IsEmpty(_service2Id);
+            Assert.Empty(_service1Id);
+            Assert.Empty(_service2Id);
 
             container.Resolve<IService1>().MethodWithOtherServiceInvocation("test1");
 
-            Assert.IsNotEmpty(_service1Id);
-            Assert.IsNotEmpty(_service2Id);
+            Assert.NotEmpty(_service1Id);
+            Assert.NotEmpty(_service2Id);
 
             var prevService1Id = _service1Id;
             var prevService2Id = _service2Id;
 
             container.Resolve<IService1>().MethodWithOtherServiceInvocation("test2");
 
-            Assert.AreEqual(prevService1Id, _service1Id);
-            Assert.AreEqual(prevService2Id, _service2Id);
+            Assert.Equal(prevService1Id, _service1Id);
+            Assert.Equal(prevService2Id, _service2Id);
         }
 
-        [Test]
+        [Fact]
         public void InjectionMembersMustBeCorrect()
         {
             const string arg = "test";
@@ -196,10 +196,10 @@ namespace LazyProxy.Unity.Tests
 
             var actualResult = container.Resolve<IService1>().MethodWithOtherServiceInvocation(arg);
 
-            Assert.AreEqual("service1->" + result, actualResult);
+            Assert.Equal("service1->" + result, actualResult);
         }
 
-        [Test]
+        [Fact]
         public void ServicesMustBeResolvedFromChildContainer()
         {
             var container = new UnityContainer()
@@ -214,11 +214,13 @@ namespace LazyProxy.Unity.Tests
             var childContainer = container.CreateChildContainer()
                 .RegisterType<IService2, Service2>();
 
-            Assert.DoesNotThrow(() =>
+            var exception = Record.Exception(() =>
             {
                 var service = childContainer.Resolve<IService1>();
                 service.MethodWithoutOtherServiceInvocation();
             });
+
+            Assert.Null(exception);
         }
     }
 }

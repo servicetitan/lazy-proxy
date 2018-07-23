@@ -1,15 +1,26 @@
-﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Attributes.Jobs;
+﻿using System.Linq;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Engines;
-using BenchmarkDotNet.Running;
-using NUnit.Framework;
+using BenchmarkDotNet.Environments;
+using BenchmarkDotNet.Jobs;
 using Unity;
 
-namespace LazyProxy.Unity.Tests
+namespace LazyProxy.Unity.Benchmarks
 {
-    [SimpleJob(RunStrategy.ColdStart)]
+    [Config(typeof(Config))]
     public class UnityExtensionBenchmark
     {
+        private class Config : ManualConfig
+        {
+            public Config()
+            {
+                Add(Job.Default.With(RunStrategy.ColdStart).With(Runtime.Clr));
+                Add(Job.Default.With(RunStrategy.ColdStart).With(Runtime.Core));
+                Add(DefaultConfig.Instance.GetColumnProviders().ToArray());
+            }
+        }
+
         private IUnityContainer _container;
         private ITestService _service;
 
@@ -116,12 +127,6 @@ namespace LazyProxy.Unity.Tests
                 .RegisterType<IInnerService8, InnerService8>()
                 .RegisterType<IInnerService9, InnerService9>()
                 .RegisterType<IInnerService10, InnerService10>();
-    }
-
-    public class UnityExtensionBenchmarkRunner
-    {
-        [Test, Explicit]
-        public void Run() => BenchmarkRunner.Run<UnityExtensionBenchmark>();
     }
 
     public interface ITestService

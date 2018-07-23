@@ -2,14 +2,18 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace LazyProxy.Core.Tests
 {
     public class LazyProxyBuilderTests
     {
         public class TestArgument { }
+
+        // ReSharper disable once MemberCanBePrivate.Global
         public class TestArgument2 { }
+
+        // ReSharper disable once MemberCanBePrivate.Global
         public class TestArgument3 { }
 
         private class TestException : Exception { }
@@ -36,31 +40,31 @@ namespace LazyProxy.Core.Tests
             string GenericMethod<T1, T2>(string arg);
         }
 
-        // ReSharper disable once UnusedMember.Global
+        // ReSharper disable once MemberCanBePrivate.Global
         public interface IGenericTestService<T, in TIn, out TOut>
         {
             TOut Method1(T arg1, TIn arg2);
             T Method2(T arg1, TIn arg2);
         }
 
-        [Test]
+        [Fact]
         public void ProxyMustImplementInterface()
         {
             var proxyType = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
 
-            Assert.IsTrue(proxyType.GetInterfaces().Contains(typeof(ITestService)));
+            Assert.True(proxyType.GetInterfaces().Contains(typeof(ITestService)));
         }
 
-        [Test]
+        [Fact]
         public void SameTypeMustBeReturnedInCaseDoubleRegistration()
         {
             var proxyType1 = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
             var proxyType2 = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
 
-            Assert.AreEqual(proxyType1, proxyType2);
+            Assert.Equal(proxyType1, proxyType2);
         }
 
-        [Test]
+        [Fact]
         public void ServiceCtorMustBeExecutedAfterMethodIsCalledAndOnlyOnce()
         {
             var constructorCounter = 0;
@@ -70,18 +74,18 @@ namespace LazyProxy.Core.Tests
                 return Mock.Of<ITestService>();
             });
 
-            Assert.AreEqual(0, constructorCounter);
+            Assert.Equal(0, constructorCounter);
 
             proxy.VoidMethod();
 
-            Assert.AreEqual(1, constructorCounter);
+            Assert.Equal(1, constructorCounter);
 
             proxy.VoidMethod();
 
-            Assert.AreEqual(1, constructorCounter);
+            Assert.Equal(1, constructorCounter);
         }
 
-        [Test]
+        [Fact]
         public void MethodsMustBeProxied()
         {
             const string arg1 = "test";
@@ -101,11 +105,11 @@ namespace LazyProxy.Core.Tests
                 return mock.Object;
             });
 
-            Assert.AreEqual(result1, proxy.Method(arg1, arg2, arg3));
-            Assert.AreEqual(result2, proxy.ParentMethod(arg4));
+            Assert.Equal(result1, proxy.Method(arg1, arg2, arg3));
+            Assert.Equal(result2, proxy.ParentMethod(arg4));
         }
 
-        [Test]
+        [Fact]
         public async Task AsyncMethodsMustBeProxied()
         {
             const string arg = "arg";
@@ -122,10 +126,10 @@ namespace LazyProxy.Core.Tests
 
             var actualResult = await proxy.MethodAsync(arg);
 
-            Assert.AreEqual(result, actualResult);
+            Assert.Equal(result, actualResult);
         }
 
-        [Test]
+        [Fact]
         public void MethodsWithDefaultValuesMustBeProxied()
         {
             const string defaultArg = "arg";
@@ -142,10 +146,10 @@ namespace LazyProxy.Core.Tests
 
             var actualResult = proxy.MethodWithDefaultValue();
 
-            Assert.AreEqual(result, actualResult);
+            Assert.Equal(result, actualResult);
         }
 
-        [Test]
+        [Fact]
         public void MethodsWithOutValuesMustBeProxied()
         {
             var expectedOutArg = "arg";
@@ -162,11 +166,11 @@ namespace LazyProxy.Core.Tests
 
             var actualResult = proxy.MethodWithOutValue(out var actualOutArg);
 
-            Assert.AreEqual(expectedResult, actualResult);
-            Assert.AreEqual(expectedOutArg, actualOutArg);
+            Assert.Equal(expectedResult, actualResult);
+            Assert.Equal(expectedOutArg, actualOutArg);
         }
 
-        [Test]
+        [Fact]
         public void MethodsWithRefValuesMustBeProxied()
         {
             var refArg = new TestArgument();
@@ -176,6 +180,7 @@ namespace LazyProxy.Core.Tests
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
+                // ReSharper disable once AccessToModifiedClosure
                 mock.Setup(s => s.MethodWithRefValue(ref refArg)).Returns(expectedResult);
 
                 return mock.Object;
@@ -183,10 +188,10 @@ namespace LazyProxy.Core.Tests
 
             var actualResult = proxy.MethodWithRefValue(ref refArg);
 
-            Assert.AreEqual(expectedResult, actualResult);
+            Assert.Equal(expectedResult, actualResult);
         }
 
-        [Test]
+        [Fact]
         public void GenericMethodsMustBeProxied()
         {
             const string arg = "arg";
@@ -203,10 +208,10 @@ namespace LazyProxy.Core.Tests
 
             var actualResult = proxy.GenericMethod<TestArgument, TestException>(arg);
 
-            Assert.AreEqual(expectedResult, actualResult);
+            Assert.Equal(expectedResult, actualResult);
         }
 
-        [Test]
+        [Fact]
         public void PropertyGettersMustBeProxied()
         {
             var result1 = new TestArgument();
@@ -222,11 +227,11 @@ namespace LazyProxy.Core.Tests
                 return mock.Object;
             });
 
-            Assert.AreEqual(result1, proxy.Property);
-            Assert.AreEqual(result2, proxy.ParentProperty);
+            Assert.Equal(result1, proxy.Property);
+            Assert.Equal(result2, proxy.ParentProperty);
         }
 
-        [Test]
+        [Fact]
         public void PropertySettersMustBeProxied()
         {
             var value1 = new TestArgument();
@@ -251,7 +256,7 @@ namespace LazyProxy.Core.Tests
             mock.VerifySet(s => s.ParentProperty = value2);
         }
 
-        [Test]
+        [Fact]
         public void IndexerGettersMustBeProxied()
         {
             const int arg = 3;
@@ -266,10 +271,10 @@ namespace LazyProxy.Core.Tests
                 return mock.Object;
             });
 
-            Assert.AreEqual(result, proxy[arg]);
+            Assert.Equal(result, proxy[arg]);
         }
 
-        [Test]
+        [Fact]
         public void IndexerSettersMustBeProxied()
         {
             const int arg = 3;
@@ -290,7 +295,7 @@ namespace LazyProxy.Core.Tests
             mock.VerifySet(s => s[arg] = result);
         }
 
-        [Test]
+        [Fact]
         public void ExceptionsFromServiceMustBeThrown()
         {
             const bool arg = true;
@@ -307,7 +312,7 @@ namespace LazyProxy.Core.Tests
             Assert.Throws<TestException>(() => proxy.ParentMethod(arg));
         }
 
-        [Test]
+        [Fact]
         public void GenericInterfacesMustBeProxied()
         {
             var arg1 = new TestArgument();
@@ -328,18 +333,20 @@ namespace LazyProxy.Core.Tests
             var actualResult1 = proxy.Method1(arg1, arg2);
             var actualResult2 = proxy.Method2(arg1, arg2);
 
-            Assert.AreEqual(expectedResult1, actualResult1);
-            Assert.AreEqual(expectedResult2, actualResult2);
+            Assert.Equal(expectedResult1, actualResult1);
+            Assert.Equal(expectedResult2, actualResult2);
         }
 
-        [Test]
+        [Fact]
         public void GenericInterfaceWithDifferentTypeParametersMustBeCreatedWithoutExceptions()
         {
-            Assert.DoesNotThrow(() =>
+            var exception = Record.Exception(() =>
             {
                 LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument, TestArgument2, TestArgument3>>();
                 LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument3, TestArgument, TestArgument2>>();
             });
+
+            Assert.Null(exception);
         }
     }
 }

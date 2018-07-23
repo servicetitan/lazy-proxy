@@ -13,15 +13,14 @@ namespace LazyProxy.Core
     public static class LazyProxyBuilder
     {
         private const string DynamicAssemblyName = "LazyProxy.DynamicTypes";
-        private const string DynamicAssemblyFileName = DynamicAssemblyName + ".dll";
         private const string LazyProxyTypeSuffix = "LazyProxyImpl";
         private const string ServiceFieldName = "_service";
 
-        private static readonly AssemblyBuilder AssemblyBuilder = AppDomain.CurrentDomain
-            .DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), AssemblyBuilderAccess.RunAndSave);
+        private static readonly AssemblyBuilder AssemblyBuilder = AssemblyBuilder
+            .DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), AssemblyBuilderAccess.Run);
 
         private static readonly ModuleBuilder ModuleBuilder = AssemblyBuilder
-            .DefineDynamicModule(DynamicAssemblyName, DynamicAssemblyFileName);
+            .DefineDynamicModule(DynamicAssemblyName);
 
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> ProxyTypes =
             new ConcurrentDictionary<Type, Lazy<Type>>();
@@ -53,12 +52,6 @@ namespace LazyProxy.Core
             return (T) Activator.CreateInstance(proxyType, lazy);
         }
 
-        /// <summary>
-        /// Saves the assembly with dynamically generated types to the file named <see cref="DynamicAssemblyFileName" />.
-        /// Can be useful for debugging.
-        /// </summary>
-        public static void SaveDynamicAssembly() => AssemblyBuilder.Save(DynamicAssemblyFileName);
-
         private static Type DefineProxyType<T>()
         {
             // Add a guid to avoid problems with defining generic types with different type parameters.
@@ -72,7 +65,7 @@ namespace LazyProxy.Core
                 .AddServiceField<T>(out var serviceField)
                 .AddConstructor<T>(serviceField)
                 .AddMethods<T>(serviceField)
-                .CreateType();
+                .CreateTypeInfo();
         }
 
         private static TypeBuilder AddInterfaceImplementation<T>(this TypeBuilder typeBuilder)

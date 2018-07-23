@@ -17,9 +17,6 @@ namespace LazyProxy.Sample
 
             Console.WriteLine("--- UnityExtension example #2 ---");
             UnityExtensionExample2();
-
-            Console.WriteLine("Saving the proxy type to a file...");
-            LazyProxyBuilder.SaveDynamicAssembly();
         }
 
         private static void LazyProxyBuilderExample()
