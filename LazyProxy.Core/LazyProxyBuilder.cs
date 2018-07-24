@@ -129,14 +129,14 @@ namespace LazyProxy.Core
 
                 generator.Emit(OpCodes.Ldarg_0);
                 generator.Emit(OpCodes.Ldfld, serviceField);
-                generator.Emit(OpCodes.Callvirt, getServiceValueMethod);
+                generator.Emit(OpCodes.Call, getServiceValueMethod);
 
                 for (var i = 1; i < parameterTypes.Length + 1; i++)
                 {
                     generator.Emit(OpCodes.Ldarg, i);
                 }
 
-                generator.Emit(OpCodes.Callvirt, method);
+                generator.Emit(OpCodes.Call, method);
                 generator.Emit(OpCodes.Ret);
 
                 typeBuilder.DefineMethodOverride(methodBuilder, method);
