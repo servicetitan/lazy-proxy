@@ -52,6 +52,30 @@ namespace LazyProxy.Core
             return (T) Activator.CreateInstance(proxyType, lazy);
         }
 
+        /// <summary>
+        /// Generate the lazy proxy type at runtime.
+        ///
+        /// Here is an example of the generated code for T == IMyService:
+        /// <![CDATA[
+        ///
+        /// public interface IMyService { void Foo(); }
+        ///
+        /// public class 1eb94ccd-79fd-48af-8adf-bc97c76c10ff_IMyServiceLazyProxyImpl : IMyService
+        /// {
+        ///     private Lazy<IMyService> _service;
+        ///
+        ///     public 1eb94ccd-79fd-48af-8adf-bc97c76c10ff_IMyServiceLazyProxyImpl(Lazy<IMyService> P_0)
+        ///     {
+        ///         _service = service;
+        ///     }
+        ///
+        ///     public void Foo() => _service.Value.Foo();
+        /// }
+        ///
+        /// ]]>
+        /// </summary>
+        /// <typeparam name="T">The interface proxy type implements.</typeparam>
+        /// <returns>The lazy proxy type.</returns>
         private static Type DefineProxyType<T>()
         {
             // Add a guid to avoid problems with defining generic types with different type parameters.
