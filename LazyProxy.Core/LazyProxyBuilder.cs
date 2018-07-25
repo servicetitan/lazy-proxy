@@ -64,7 +64,7 @@ namespace LazyProxy.Core
         /// {
         ///     private Lazy<IMyService> _service;
         ///
-        ///     public 1eb94ccd-79fd-48af-8adf-bc97c76c10ff_IMyServiceLazyProxyImpl(Lazy<IMyService> P_0)
+        ///     public LazyProxyImpl_1eb94ccd79fd48af8adfbc97c76c10ff_IMyService(Lazy<IMyService> service)
         ///     {
         ///         _service = service;
         ///     }
