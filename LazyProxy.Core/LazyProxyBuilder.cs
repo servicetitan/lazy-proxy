@@ -60,7 +60,7 @@ namespace LazyProxy.Core
         ///
         /// public interface IMyService { void Foo(); }
         ///
-        /// public class 1eb94ccd-79fd-48af-8adf-bc97c76c10ff_IMyServiceLazyProxyImpl : IMyService
+        /// public class LazyProxyImpl_1eb94ccd79fd48af8adfbc97c76c10ff_IMyService : IMyService
         /// {
         ///     private Lazy<IMyService> _service;
         ///
@@ -79,10 +79,11 @@ namespace LazyProxy.Core
         private static Type DefineProxyType<T>()
         {
             // Add a guid to avoid problems with defining generic types with different type parameters.
-            var guid = Guid.NewGuid().ToString();
+            // Dashes are allowed by IL but they are removed to match the class names in C#.
+            var guid = Guid.NewGuid().ToString().Replace("-", "");
 
             var type = typeof(T);
-            var typeName = $"{type.Namespace}.{guid}_{type.Name}{LazyProxyTypeSuffix}";
+            var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
             return ModuleBuilder.DefineType(typeName, TypeAttributes.Public)
                 .AddInterfaceImplementation<T>()
