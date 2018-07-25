@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LazyProxy.Core", "LazyProxy.Core\LazyProxy.Core.csproj", "{4D46F079-C9C1-47AC-8A75-B89DCFDFFE07}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LazyProxy", "LazyProxy\LazyProxy.csproj", "{4D46F079-C9C1-47AC-8A75-B89DCFDFFE07}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LazyProxy.Sample", "LazyProxy.Sample\LazyProxy.Sample.csproj", "{3C038BA1-52B1-4C0A-B7CD-DDE48287EE74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LazyProxy.Core.Tests", "LazyProxy.Core.Tests\LazyProxy.Core.Tests.csproj", "{A99EBCD2-140E-4A72-AA3F-DC018B2F3F7D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LazyProxy.Tests", "LazyProxy.Tests\LazyProxy.Tests.csproj", "{A99EBCD2-140E-4A72-AA3F-DC018B2F3F7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
