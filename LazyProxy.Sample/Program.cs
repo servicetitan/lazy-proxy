@@ -1,5 +1,4 @@
 ﻿using System;
-using LazyProxy.Core;
 
 namespace LazyProxy.Sample
 {

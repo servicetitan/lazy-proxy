@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace LazyProxy.Core
+namespace LazyProxy
 {
     /// <summary>
     /// Is used to create at runtime a lazy proxy type or an instance of this type.

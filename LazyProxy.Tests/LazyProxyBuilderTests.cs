@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Moq;
 using Xunit;
 
-namespace LazyProxy.Core.Tests
+namespace LazyProxy.Tests
 {
     public class LazyProxyBuilderTests
     {
