@@ -46,6 +46,16 @@ The following is supported:
 **Not supported yet:**
 - Events
 
+## Lazy injection for IoC containers
+
+A dynamic lazy proxy can be used for IoC containers to change the resolving behaviour.
+
+Dependencies registered as lazy are created as dynamic proxy objects built in real time, but the real classes are resolved only after the first execution of proxy method or property.
+
+Also dynamic lazy proxy allows injection of circular dependencies.
+
+[Lazy injection for Unity container](https://github.com/servicetitan/lazy-proxy-unity)
+
 ## License
 
 This project is licensed under the Apache License, Version 2.0. - see the [LICENSE](https://github.com/servicetitan/lazy-proxy/blob/master/LICENSE) file for details.
