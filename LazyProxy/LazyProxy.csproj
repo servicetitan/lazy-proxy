@@ -14,6 +14,7 @@
     <PackageTags>lazy proxy dynamic runtime wrapper</PackageTags>
     <Description>A dynamic lazy proxy is a class built in real time, that implemenets some interface T, takes to the constructor an argument Lazy of T and routes all invocations to the corresponding method or property of this argument.
 The real instance wrapped by Lazy of T is created only after the first invocation of method or property. It allows to distribute the loading from the class creation to the method or property invocation.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
