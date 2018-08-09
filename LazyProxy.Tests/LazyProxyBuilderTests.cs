@@ -47,12 +47,22 @@ namespace LazyProxy.Tests
             T Method2(T arg1, TIn arg2);
         }
 
+        // ReSharper disable once UnusedMember.Global
+        public abstract class AbstractTestService { }
+
         [Fact]
         public void ProxyMustImplementInterface()
         {
             var proxyType = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
 
             Assert.True(proxyType.GetInterfaces().Contains(typeof(ITestService)));
+        }
+
+        [Fact]
+        public void ExceptionMustBeThrownForBuildingProxyByClass()
+        {
+            Assert.Throws<NotSupportedException>(
+                () => LazyProxyBuilder.BuildLazyProxyType<AbstractTestService>());
         }
 
         [Fact]
