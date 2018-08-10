@@ -33,6 +33,12 @@ namespace LazyProxy
         /// <returns>The lazy proxy type.</returns>
         public static Type BuildLazyProxyType<T>()
         {
+            // There is no way to constraint it on the compilation step.
+            if (!typeof(T).IsInterface)
+            {
+                throw new NotSupportedException("The lazy proxy is supported only for interfaces.");
+            }
+
             // Lazy is used to guarantee the valueFactory is invoked only once.
             // More info: http://reedcopsey.com/2011/01/16/concurrentdictionarytkeytvalue-used-with-lazyt/
             var lazy = ProxyTypes.GetOrAdd(typeof(T), type => new Lazy<Type>(DefineProxyType<T>));
