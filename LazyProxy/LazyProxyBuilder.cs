@@ -27,21 +27,32 @@ namespace LazyProxy
 
         /// <summary>
         /// Defines at runtime a class that implements interface T
-        /// and proxis all invocations to <see cref="Lazy{T}"/> of this interface.
+        /// and proxies all invocations to <see cref="Lazy{T}"/> of this interface.
         /// </summary>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type.</returns>
         public static Type BuildLazyProxyType<T>()
         {
+            return BuildLazyProxyType(typeof(T));
+        }
+
+        /// <summary>
+        /// Defines at runtime a class that implements interface of Type
+        /// and proxies all invocations to <see cref="Lazy{T}"/> of this interface.
+        /// </summary>
+        /// <param name="type">The interface proxy type implements.</param>
+        /// <returns>The lazy proxy type.</returns>
+        public static Type BuildLazyProxyType(Type type)
+        {
             // There is no way to constraint it on the compilation step.
-            if (!typeof(T).IsInterface)
+            if (!type.IsInterface)
             {
                 throw new NotSupportedException("The lazy proxy is supported only for interfaces.");
             }
 
             // Lazy is used to guarantee the valueFactory is invoked only once.
             // More info: http://reedcopsey.com/2011/01/16/concurrentdictionarytkeytvalue-used-with-lazyt/
-            var lazy = ProxyTypes.GetOrAdd(typeof(T), type => new Lazy<Type>(DefineProxyType<T>));
+            var lazy = ProxyTypes.GetOrAdd(type, t => new Lazy<Type>(() => DefineProxyType(t)));
             return lazy.Value;
         }
 
@@ -82,41 +93,45 @@ namespace LazyProxy
         /// </summary>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type.</returns>
-        private static Type DefineProxyType<T>()
+        private static Type DefineProxyType(Type type)
         {
             // Add a guid to avoid problems with defining generic types with different type parameters.
             // Dashes are allowed by IL but they are removed to match the class names in C#.
             var guid = Guid.NewGuid().ToString().Replace("-", "");
 
-            var type = typeof(T);
             var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
             return ModuleBuilder.DefineType(typeName, TypeAttributes.Public)
-                .AddInterfaceImplementation<T>()
-                .AddServiceField<T>(out var serviceField)
-                .AddConstructor<T>(serviceField)
-                .AddMethods<T>(serviceField)
+                .AddInterface(type)
+                .AddServiceField(type, out var serviceField)
+                .AddConstructor(type, serviceField)
+                .AddMethods(type, serviceField)
                 .CreateTypeInfo();
         }
 
-        private static TypeBuilder AddInterfaceImplementation<T>(this TypeBuilder typeBuilder)
+        private static TypeBuilder AddInterface(this TypeBuilder typeBuilder, Type type)
         {
-            typeBuilder.AddInterfaceImplementation(typeof(T));
+            typeBuilder.AddInterfaceImplementation(type);
             return typeBuilder;
         }
 
-        private static TypeBuilder AddServiceField<T>(this TypeBuilder typeBuilder, out FieldInfo serviceField)
+        private static TypeBuilder AddServiceField(this TypeBuilder typeBuilder,
+            Type type, out FieldInfo serviceField)
         {
-            serviceField = typeBuilder.DefineField(ServiceFieldName, typeof(Lazy<T>), FieldAttributes.Private);
+            serviceField = typeBuilder.DefineField(
+                ServiceFieldName,
+                typeof(Lazy<>).MakeGenericType(type),
+                FieldAttributes.Private);
+
             return typeBuilder;
         }
 
-        private static TypeBuilder AddConstructor<T>(this TypeBuilder typeBuilder, FieldInfo serviceField)
+        private static TypeBuilder AddConstructor(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
         {
             var constructorBuilder = typeBuilder.DefineConstructor(
                 MethodAttributes.Public,
                 CallingConventions.Standard,
-                new[] {typeof(Lazy<T>)}
+                new[] {typeof(Lazy<>).MakeGenericType(type)}
             );
 
             var generator = constructorBuilder.GetILGenerator();
@@ -129,10 +144,10 @@ namespace LazyProxy
             return typeBuilder;
         }
 
-        private static TypeBuilder AddMethods<T>(this TypeBuilder typeBuilder, FieldInfo serviceField)
+        private static TypeBuilder AddMethods(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
         {
-            var methods = GetMethods<T>();
-            var getServiceValueMethod = GetGetServiceValueMethod<T>(serviceField);
+            var methods = GetMethods(type);
+            var getServiceValueMethod = GetGetServiceValueMethod(serviceField);
 
             foreach (var method in methods)
             {
@@ -176,20 +191,20 @@ namespace LazyProxy
             return typeBuilder;
         }
 
-        private static IEnumerable<MethodInfo> GetMethods<T>()
+        private static IEnumerable<MethodInfo> GetMethods(Type type)
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
-            return typeof(T).GetMethods(flags)
-                .Concat(typeof(T).GetInterfaces()
+            return type.GetMethods(flags)
+                .Concat(type.GetInterfaces()
                     .SelectMany(@interface => @interface.GetMethods(flags)))
                 .Distinct();
         }
 
-        private static MethodInfo GetGetServiceValueMethod<T>(FieldInfo serviceField)
+        private static MethodInfo GetGetServiceValueMethod(FieldInfo serviceField)
         {
             // ReSharper disable once PossibleNullReferenceException
-            return serviceField.FieldType.GetProperty(nameof(Lazy<T>.Value)).GetGetMethod(true);
+            return serviceField.FieldType.GetProperty("Value").GetGetMethod(true);
         }
     }
 }
