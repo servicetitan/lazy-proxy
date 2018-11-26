@@ -91,7 +91,7 @@ namespace LazyProxy
         ///
         /// ]]>
         /// </summary>
-        /// <typeparam name="T">The interface proxy type implements.</typeparam>
+        /// <param name="type">The interface proxy type implements.</param>
         /// <returns>The lazy proxy type.</returns>
         private static Type DefineProxyType(Type type)
         {

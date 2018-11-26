@@ -56,7 +56,7 @@ namespace LazyProxy.Tests
         {
             var proxyType = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
 
-            Assert.True(proxyType.GetInterfaces().Contains(typeof(ITestService)));
+            Assert.Contains(typeof(ITestService), proxyType.GetInterfaces());
         }
 
         [Fact]
