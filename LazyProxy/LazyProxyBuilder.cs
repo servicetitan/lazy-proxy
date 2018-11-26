@@ -111,6 +111,15 @@ namespace LazyProxy
 
         private static TypeBuilder AddInterface(this TypeBuilder typeBuilder, Type type)
         {
+            if (type.IsGenericTypeDefinition)
+            {
+                var parameterNames = type.GetGenericArguments()
+                    .Select(p => p.Name)
+                    .ToArray();
+
+                typeBuilder.DefineGenericParameters(parameterNames);
+            }
+
             typeBuilder.AddInterfaceImplementation(type);
             return typeBuilder;
         }

@@ -45,6 +45,7 @@ namespace LazyProxy.Tests
         {
             TOut Method1(T arg1, TIn arg2);
             T Method2(T arg1, TIn arg2);
+            T GenericMethod<T1, T2>(TIn arg);
         }
 
         // ReSharper disable once UnusedMember.Global
@@ -352,6 +353,7 @@ namespace LazyProxy.Tests
         {
             var exception = Record.Exception(() =>
             {
+                LazyProxyBuilder.BuildLazyProxyType(typeof(IGenericTestService<,,>));
                 LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument, TestArgument2, TestArgument3>>();
                 LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument3, TestArgument, TestArgument2>>();
             });
