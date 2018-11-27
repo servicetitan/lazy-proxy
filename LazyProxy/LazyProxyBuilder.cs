@@ -91,7 +91,7 @@ namespace LazyProxy
         ///
         /// ]]>
         /// </summary>
-        /// <typeparam name="T">The interface proxy type implements.</typeparam>
+        /// <param name="type">The interface proxy type implements.</param>
         /// <returns>The lazy proxy type.</returns>
         private static Type DefineProxyType(Type type)
         {
@@ -102,11 +102,22 @@ namespace LazyProxy
             var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
             return ModuleBuilder.DefineType(typeName, TypeAttributes.Public)
+                .AddGenericParameters(type)
                 .AddInterface(type)
                 .AddServiceField(type, out var serviceField)
                 .AddConstructor(type, serviceField)
                 .AddMethods(type, serviceField)
                 .CreateTypeInfo();
+        }
+
+        private static TypeBuilder AddGenericParameters(this TypeBuilder typeBuilder, Type type)
+        {
+            if (type.IsGenericTypeDefinition)
+            {
+                AddGenericParameters(type.GetGenericArguments, typeBuilder.DefineGenericParameters);
+            }
+
+            return typeBuilder;
         }
 
         private static TypeBuilder AddInterface(this TypeBuilder typeBuilder, Type type)
@@ -164,11 +175,7 @@ namespace LazyProxy
 
                 if (method.IsGenericMethod)
                 {
-                    var genericTypeNames = method.GetGenericArguments()
-                        .Select(genericType => genericType.Name)
-                        .ToArray();
-
-                    methodBuilder.DefineGenericParameters(genericTypeNames);
+                    AddGenericParameters(method.GetGenericArguments, methodBuilder.DefineGenericParameters);
                 }
 
                 var generator = methodBuilder.GetILGenerator();
@@ -205,6 +212,44 @@ namespace LazyProxy
         {
             // ReSharper disable once PossibleNullReferenceException
             return serviceField.FieldType.GetProperty("Value").GetGetMethod(true);
+        }
+
+        private static void AddGenericParameters(
+            Func<IReadOnlyList<Type>> getGenericParameters,
+            Func<string[], IReadOnlyList<GenericTypeParameterBuilder>> defineGenericParameters)
+        {
+            var genericParameters = getGenericParameters();
+
+            var genericParametersNames = genericParameters
+                .Select(genericType => genericType.Name)
+                .ToArray();
+
+            var definedGenericParameters = defineGenericParameters(genericParametersNames);
+
+            for (var i = 0; i < genericParameters.Count; i++)
+            {
+                var genericParameter = genericParameters[i];
+                var definedGenericParameter = definedGenericParameters[i];
+                var genericParameterAttributes = genericParameter.GenericParameterAttributes
+                                                 & ~GenericParameterAttributes.Covariant
+                                                 & ~GenericParameterAttributes.Contravariant;
+
+                definedGenericParameter.SetGenericParameterAttributes(genericParameterAttributes);
+
+                var genericParameterConstraints = genericParameter.GetGenericParameterConstraints();
+
+                foreach (var constraint in genericParameterConstraints)
+                {
+                    if (constraint.IsInterface)
+                    {
+                        definedGenericParameter.SetInterfaceConstraints(constraint);
+                    }
+                    else
+                    {
+                        definedGenericParameter.SetBaseTypeConstraint(constraint);
+                    }
+                }
+            }
         }
     }
 }

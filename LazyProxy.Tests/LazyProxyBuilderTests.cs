@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using Xunit;
@@ -8,13 +7,21 @@ namespace LazyProxy.Tests
 {
     public class LazyProxyBuilderTests
     {
-        public class TestArgument { }
+        public interface IBaseArgument { }
+
+        public abstract class BaseArgument : IBaseArgument { }
+
+        public abstract class BaseArgument2 { }
+
+        public struct TestArgument : IBaseArgument { }
 
         // ReSharper disable once MemberCanBePrivate.Global
-        public class TestArgument2 { }
+        public class TestArgument2 : BaseArgument { }
 
         // ReSharper disable once MemberCanBePrivate.Global
-        public class TestArgument3 { }
+        public class TestArgument3 : BaseArgument { }
+
+        public class TestArgument4 : BaseArgument2, IBaseArgument { }
 
         private class TestException : Exception { }
 
@@ -37,14 +44,21 @@ namespace LazyProxy.Tests
             string MethodWithDefaultValue(string arg = "arg");
             string MethodWithOutValue(out string arg);
             string MethodWithRefValue(ref TestArgument arg);
-            string GenericMethod<T1, T2>(string arg);
+            string GenericMethod<T1, T2, T3>(string arg)
+                where T1 : class, IBaseArgument, new()
+                where T2 : struct
+                where T3 : BaseArgument2, IBaseArgument;
         }
 
         // ReSharper disable once MemberCanBePrivate.Global
         public interface IGenericTestService<T, in TIn, out TOut>
+            where T : class, IBaseArgument, new()
+            where TIn : struct
+            where TOut : BaseArgument2, IBaseArgument
         {
             TOut Method1(T arg1, TIn arg2);
             T Method2(T arg1, TIn arg2);
+            T GenericMethod<T1, T2>(TIn arg);
         }
 
         // ReSharper disable once UnusedMember.Global
@@ -55,7 +69,7 @@ namespace LazyProxy.Tests
         {
             var proxyType = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
 
-            Assert.True(proxyType.GetInterfaces().Contains(typeof(ITestService)));
+            Assert.Contains(typeof(ITestService), proxyType.GetInterfaces());
         }
 
         [Fact]
@@ -211,12 +225,14 @@ namespace LazyProxy.Tests
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
-                mock.Setup(s => s.GenericMethod<TestArgument, TestException>(arg)).Returns(expectedResult);
+                mock
+                    .Setup(s => s.GenericMethod<TestArgument2, TestArgument, TestArgument4>(arg))
+                    .Returns(expectedResult);
 
                 return mock.Object;
             });
 
-            var actualResult = proxy.GenericMethod<TestArgument, TestException>(arg);
+            var actualResult = proxy.GenericMethod<TestArgument2, TestArgument, TestArgument4>(arg);
 
             Assert.Equal(expectedResult, actualResult);
         }
@@ -325,14 +341,14 @@ namespace LazyProxy.Tests
         [Fact]
         public void GenericInterfacesMustBeProxied()
         {
-            var arg1 = new TestArgument();
-            var arg2 = new TestArgument2();
-            var expectedResult1 = new TestArgument3();
-            var expectedResult2 = new TestArgument();
+            var arg1 = new TestArgument2();
+            var arg2 = new TestArgument();
+            var expectedResult1 = new TestArgument4();
+            var expectedResult2 = new TestArgument2();
 
             var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
             {
-                var mock = new Mock<IGenericTestService<TestArgument, TestArgument2, TestArgument3>>(MockBehavior.Strict);
+                var mock = new Mock<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>(MockBehavior.Strict);
 
                 mock.Setup(s => s.Method1(arg1, arg2)).Returns(expectedResult1);
                 mock.Setup(s => s.Method2(arg1, arg2)).Returns(expectedResult2);
@@ -352,8 +368,10 @@ namespace LazyProxy.Tests
         {
             var exception = Record.Exception(() =>
             {
-                LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument, TestArgument2, TestArgument3>>();
-                LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument3, TestArgument, TestArgument2>>();
+                LazyProxyBuilder.BuildLazyProxyType(typeof(IGenericTestService<,,>));
+                LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>();
+                LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument3, TestArgument, TestArgument4>>();
+
             });
 
             Assert.Null(exception);
