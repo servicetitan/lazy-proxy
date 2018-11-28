@@ -69,7 +69,7 @@ namespace LazyProxy
         /// <returns>The lazy proxy type instance.</returns>
         public static T CreateInstance<T>(Func<T> valueFactory)
         {
-            return (T) CreateInstance(typeof(T), () => valueFactory());
+            return (T) CreateInstance(typeof(T), valueFactory as Func<object>);
         }
 
         /// <summary>
