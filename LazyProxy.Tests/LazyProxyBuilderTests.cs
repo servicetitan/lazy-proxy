@@ -67,7 +67,7 @@ namespace LazyProxy.Tests
         [Fact]
         public void ProxyMustImplementInterface()
         {
-            var proxyType = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
+            var proxyType = LazyProxyBuilder.GetType<ITestService>();
 
             Assert.Contains(typeof(ITestService), proxyType.GetInterfaces());
         }
@@ -76,14 +76,14 @@ namespace LazyProxy.Tests
         public void ExceptionMustBeThrownForBuildingProxyByClass()
         {
             Assert.Throws<NotSupportedException>(
-                () => LazyProxyBuilder.BuildLazyProxyType<AbstractTestService>());
+                () => LazyProxyBuilder.GetType<AbstractTestService>());
         }
 
         [Fact]
         public void SameTypeMustBeReturnedInCaseDoubleRegistration()
         {
-            var proxyType1 = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
-            var proxyType2 = LazyProxyBuilder.BuildLazyProxyType<ITestService>();
+            var proxyType1 = LazyProxyBuilder.GetType<ITestService>();
+            var proxyType2 = LazyProxyBuilder.GetType<ITestService>();
 
             Assert.Equal(proxyType1, proxyType2);
         }
@@ -92,7 +92,7 @@ namespace LazyProxy.Tests
         public void ServiceCtorMustBeExecutedAfterMethodIsCalledAndOnlyOnce()
         {
             var constructorCounter = 0;
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 constructorCounter++;
                 return Mock.Of<ITestService>();
@@ -119,7 +119,7 @@ namespace LazyProxy.Tests
             const string result1 = "result1";
             const string result2 = "result2";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -139,7 +139,7 @@ namespace LazyProxy.Tests
             const string arg = "arg";
             const string result = "result";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -159,7 +159,7 @@ namespace LazyProxy.Tests
             const string defaultArg = "arg";
             const string result = "result";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -179,7 +179,7 @@ namespace LazyProxy.Tests
             var expectedOutArg = "arg";
             const string expectedResult = "result";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -200,7 +200,7 @@ namespace LazyProxy.Tests
             var refArg = new TestArgument();
             const string expectedResult = "result";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -221,7 +221,7 @@ namespace LazyProxy.Tests
             const string arg = "arg";
             const string expectedResult = "result";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -243,7 +243,7 @@ namespace LazyProxy.Tests
             var result1 = new TestArgument();
             const int result2 = 3;
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -265,7 +265,7 @@ namespace LazyProxy.Tests
 
             Mock<ITestService> mock = null;
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -288,7 +288,7 @@ namespace LazyProxy.Tests
             const int arg = 3;
             const string result = "result";
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -307,7 +307,7 @@ namespace LazyProxy.Tests
             const string result = "result";
             Mock<ITestService> mock = null;
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -326,7 +326,7 @@ namespace LazyProxy.Tests
         {
             const bool arg = true;
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<ITestService>(MockBehavior.Strict);
 
@@ -346,7 +346,7 @@ namespace LazyProxy.Tests
             var expectedResult1 = new TestArgument4();
             var expectedResult2 = new TestArgument2();
 
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance(() =>
+            var proxy = LazyProxyBuilder.CreateInstance(() =>
             {
                 var mock = new Mock<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>(MockBehavior.Strict);
 
@@ -368,9 +368,9 @@ namespace LazyProxy.Tests
         {
             var exception = Record.Exception(() =>
             {
-                LazyProxyBuilder.BuildLazyProxyType(typeof(IGenericTestService<,,>));
-                LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>();
-                LazyProxyBuilder.BuildLazyProxyType<IGenericTestService<TestArgument3, TestArgument, TestArgument4>>();
+                LazyProxyBuilder.GetType(typeof(IGenericTestService<,,>));
+                LazyProxyBuilder.GetType<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>();
+                LazyProxyBuilder.GetType<IGenericTestService<TestArgument3, TestArgument, TestArgument4>>();
 
             });
 

@@ -6,7 +6,7 @@ namespace LazyProxy.Sample
     {
         public static void Main(string[] args)
         {
-            var proxy = LazyProxyBuilder.CreateLazyProxyInstance<IMyService>(() =>
+            var proxy = LazyProxyBuilder.CreateInstance<IMyService>(() =>
             {
                 Console.WriteLine("The real instance creation...");
                 return new MyService();

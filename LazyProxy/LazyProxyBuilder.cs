@@ -31,9 +31,9 @@ namespace LazyProxy
         /// </summary>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type.</returns>
-        public static Type BuildLazyProxyType<T>()
+        public static Type GetType<T>()
         {
-            return BuildLazyProxyType(typeof(T));
+            return GetType(typeof(T));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace LazyProxy
         /// </summary>
         /// <param name="type">The interface proxy type implements.</param>
         /// <returns>The lazy proxy type.</returns>
-        public static Type BuildLazyProxyType(Type type)
+        public static Type GetType(Type type)
         {
             // There is no way to constraint it on the compilation step.
             if (!type.IsInterface)
@@ -62,10 +62,10 @@ namespace LazyProxy
         /// <param name="valueFactory">The function real value returns.</param>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type instance.</returns>
-        public static T CreateLazyProxyInstance<T>(Func<T> valueFactory)
+        public static T CreateInstance<T>(Func<T> valueFactory)
         {
             var lazy = new Lazy<T>(valueFactory);
-            var proxyType = BuildLazyProxyType<T>();
+            var proxyType = GetType<T>();
             return (T) Activator.CreateInstance(proxyType, lazy);
         }
 
