@@ -87,7 +87,12 @@ namespace LazyProxy
                 proxyType = proxyType.MakeGenericType(type.GetGenericArguments());
             }
 
-            return Activator.CreateInstance(proxyType, valueFactory);
+            // Using 'Initialize' method after the instance creation allows to improve performance
+            // because Activator.CreateInstance executed with arguments is much slower.
+            var instance = (LazyProxyBase) Activator.CreateInstance(proxyType);
+            instance.Initialize(valueFactory);
+
+            return instance;
         }
 
         /// <summary>
@@ -122,11 +127,11 @@ namespace LazyProxy
 
             var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
-            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public)
+            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public, typeof(LazyProxyBase))
                 .AddGenericParameters(type)
                 .AddInterface(type)
                 .AddServiceField(type, out var serviceField)
-                .AddConstructor(type, serviceField)
+                .AddInitializeMethod(type, serviceField)
                 .AddMethods(type, serviceField)
                 .CreateTypeInfo();
         }
@@ -158,12 +163,13 @@ namespace LazyProxy
             return typeBuilder;
         }
 
-        private static TypeBuilder AddConstructor(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
+        private static TypeBuilder AddInitializeMethod(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
         {
-            var constructorBuilder = typeBuilder.DefineConstructor(
-                MethodAttributes.Public,
-                CallingConventions.Standard,
-                new[] {typeof(Func<object>)}
+            var methodBuilder = typeBuilder.DefineMethod(
+                "Initialize",
+                MethodAttributes.Public | MethodAttributes.Virtual,
+                null,
+                new [] { typeof(Func<object>) }
             );
 
             // ReSharper disable once PossibleNullReferenceException
@@ -171,7 +177,7 @@ namespace LazyProxy
                 .GetMethod("CreateInstance", BindingFlags.Public | BindingFlags.Static)
                 .MakeGenericMethod(type);
 
-            var generator = constructorBuilder.GetILGenerator();
+            var generator = methodBuilder.GetILGenerator();
 
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
