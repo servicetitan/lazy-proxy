@@ -107,7 +107,7 @@ namespace LazyProxy
         /// {
         ///     private Lazy<IMyService> _service;
         ///
-        ///     public LazyProxyImpl_1eb94ccd79fd48af8adfbc97c76c10ff_IMyService(Func<object> valueFactory)
+        ///     public void Initialize(Func<object> valueFactory)
         ///     {
         ///         _service = LazyBuilder.CreateInstance<IMyService>(valueFactory);
         ///     }
