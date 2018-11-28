@@ -69,16 +69,25 @@ namespace LazyProxy
         /// <returns>The lazy proxy type instance.</returns>
         public static T CreateInstance<T>(Func<T> valueFactory)
         {
-            var type = typeof(T);
-            var lazy = new Lazy<T>(valueFactory);
-            var proxyType = GetType<T>();
+            return (T) CreateInstance(typeof(T), () => valueFactory());
+        }
+
+        /// <summary>
+        /// Creates a lazy proxy type instance using a value factory.
+        /// </summary>
+        /// <param name="type">The interface proxy type implements.</param>
+        /// <param name="valueFactory">The function real value returns.</param>
+        /// <returns>The lazy proxy type instance.</returns>
+        public static object CreateInstance(Type type, Func<object> valueFactory)
+        {
+            var proxyType = GetType(type);
 
             if (type.IsConstructedGenericType)
             {
                 proxyType = proxyType.MakeGenericType(type.GetGenericArguments());
             }
 
-            return (T) Activator.CreateInstance(proxyType, lazy);
+            return Activator.CreateInstance(proxyType, valueFactory);
         }
 
         /// <summary>
@@ -93,9 +102,9 @@ namespace LazyProxy
         /// {
         ///     private Lazy<IMyService> _service;
         ///
-        ///     public LazyProxyImpl_1eb94ccd79fd48af8adfbc97c76c10ff_IMyService(Lazy<IMyService> service)
+        ///     public LazyProxyImpl_1eb94ccd79fd48af8adfbc97c76c10ff_IMyService(Func<object> valueFactory)
         ///     {
-        ///         _service = service;
+        ///         _service = LazyBuilder.CreateInstance<IMyService>(valueFactory);
         ///     }
         ///
         ///     public void Foo() => _service.Value.Foo();
@@ -154,13 +163,19 @@ namespace LazyProxy
             var constructorBuilder = typeBuilder.DefineConstructor(
                 MethodAttributes.Public,
                 CallingConventions.Standard,
-                new[] {typeof(Lazy<>).MakeGenericType(type)}
+                new[] {typeof(Func<object>)}
             );
+
+            // ReSharper disable once PossibleNullReferenceException
+            var createLazyMethod = typeof(LazyBuilder)
+                .GetMethod("CreateInstance", BindingFlags.Public | BindingFlags.Static)
+                .MakeGenericMethod(type);
 
             var generator = constructorBuilder.GetILGenerator();
 
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Call, createLazyMethod);
             generator.Emit(OpCodes.Stfld, serviceField);
             generator.Emit(OpCodes.Ret);
 
