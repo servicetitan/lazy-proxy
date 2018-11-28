@@ -31,7 +31,7 @@ namespace LazyProxy
         /// </summary>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type.</returns>
-        public static Type GetType<T>()
+        public static Type GetType<T>() where T : class
         {
             return GetType(typeof(T));
         }
@@ -67,9 +67,9 @@ namespace LazyProxy
         /// <param name="valueFactory">The function real value returns.</param>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type instance.</returns>
-        public static T CreateInstance<T>(Func<T> valueFactory)
+        public static T CreateInstance<T>(Func<T> valueFactory) where T : class
         {
-            return (T) CreateInstance(typeof(T), valueFactory as Func<object>);
+            return (T) CreateInstance(typeof(T), valueFactory);
         }
 
         /// <summary>
