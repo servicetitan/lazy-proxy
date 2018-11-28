@@ -50,6 +50,11 @@ namespace LazyProxy
                 throw new NotSupportedException("The lazy proxy is supported only for interfaces.");
             }
 
+            if (type.IsConstructedGenericType)
+            {
+                type = type.GetGenericTypeDefinition();
+            }
+
             // Lazy is used to guarantee the valueFactory is invoked only once.
             // More info: http://reedcopsey.com/2011/01/16/concurrentdictionarytkeytvalue-used-with-lazyt/
             var lazy = ProxyTypes.GetOrAdd(type, t => new Lazy<Type>(() => DefineProxyType(t)));
@@ -64,8 +69,15 @@ namespace LazyProxy
         /// <returns>The lazy proxy type instance.</returns>
         public static T CreateInstance<T>(Func<T> valueFactory)
         {
+            var type = typeof(T);
             var lazy = new Lazy<T>(valueFactory);
             var proxyType = GetType<T>();
+
+            if (type.IsConstructedGenericType)
+            {
+                proxyType = proxyType.MakeGenericType(type.GetGenericArguments());
+            }
+
             return (T) Activator.CreateInstance(proxyType, lazy);
         }
 
