@@ -50,15 +50,18 @@ namespace LazyProxy
                 throw new NotSupportedException("The lazy proxy is supported only for interfaces.");
             }
 
-            if (type.IsConstructedGenericType)
-            {
-                type = type.GetGenericTypeDefinition();
-            }
+            var interfaceType = type.IsConstructedGenericType
+                ? type.GetGenericTypeDefinition()
+                : type;
 
             // Lazy is used to guarantee the valueFactory is invoked only once.
             // More info: http://reedcopsey.com/2011/01/16/concurrentdictionarytkeytvalue-used-with-lazyt/
-            var lazy = ProxyTypes.GetOrAdd(type, t => new Lazy<Type>(() => DefineProxyType(t)));
-            return lazy.Value;
+            var lazy = ProxyTypes.GetOrAdd(interfaceType, t => new Lazy<Type>(() => DefineProxyType(t)));
+            var proxyType = lazy.Value;
+
+            return type.IsConstructedGenericType
+                ? proxyType.MakeGenericType(type.GetGenericArguments())
+                : proxyType;
         }
 
         /// <summary>
@@ -81,11 +84,6 @@ namespace LazyProxy
         public static object CreateInstance(Type type, Func<object> valueFactory)
         {
             var proxyType = GetType(type);
-
-            if (type.IsConstructedGenericType)
-            {
-                proxyType = proxyType.MakeGenericType(type.GetGenericArguments());
-            }
 
             // Using 'Initialize' method after the instance creation allows to improve performance
             // because Activator.CreateInstance executed with arguments is much slower.
