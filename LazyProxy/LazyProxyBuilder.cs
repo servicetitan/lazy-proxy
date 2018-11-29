@@ -25,6 +25,9 @@ namespace LazyProxy
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> ProxyTypes =
             new ConcurrentDictionary<Type, Lazy<Type>>();
 
+        private static readonly MethodInfo CreateLazyMethod = typeof(LazyBuilder)
+            .GetMethod("CreateInstance", BindingFlags.Public | BindingFlags.Static);
+
         /// <summary>
         /// Defines at runtime a class that implements interface T
         /// and proxies all invocations to <see cref="Lazy{T}"/> of this interface.
@@ -170,10 +173,7 @@ namespace LazyProxy
                 new [] { typeof(Func<object>) }
             );
 
-            // ReSharper disable once PossibleNullReferenceException
-            var createLazyMethod = typeof(LazyBuilder)
-                .GetMethod("CreateInstance", BindingFlags.Public | BindingFlags.Static)
-                .MakeGenericMethod(type);
+            var createLazyMethod = CreateLazyMethod.MakeGenericMethod(type);
 
             var generator = methodBuilder.GetILGenerator();
 
