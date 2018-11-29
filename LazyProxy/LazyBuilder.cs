@@ -3,7 +3,7 @@
 namespace LazyProxy
 {
     /// <summary>
-    /// Is used to create at runtime instances of <see cref="Lazy{T}"/>.
+    /// This type hosts factory method that creates <see cref="Lazy{T}"/> instances.
     /// </summary>
     public static class LazyBuilder
     {

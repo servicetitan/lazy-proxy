@@ -8,7 +8,7 @@ namespace LazyProxy
     public abstract class LazyProxyBase
     {
         /// <summary>
-        /// Initialize inner service of <see cref="Lazy{T}"/> by value factory.
+        /// Initializes inner <see cref="Lazy{T}"/> instance with the valueFactory provided.
         /// </summary>
         /// <param name="valueFactory">Function that returns a value.</param>
         public abstract void Initialize(Func<object> valueFactory);
