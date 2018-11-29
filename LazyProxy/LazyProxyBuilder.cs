@@ -25,13 +25,16 @@ namespace LazyProxy
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> ProxyTypes =
             new ConcurrentDictionary<Type, Lazy<Type>>();
 
+        private static readonly MethodInfo CreateLazyMethod = typeof(LazyBuilder)
+            .GetMethod("CreateInstance", BindingFlags.Public | BindingFlags.Static);
+
         /// <summary>
         /// Defines at runtime a class that implements interface T
         /// and proxies all invocations to <see cref="Lazy{T}"/> of this interface.
         /// </summary>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type.</returns>
-        public static Type GetType<T>()
+        public static Type GetType<T>() where T : class
         {
             return GetType(typeof(T));
         }
@@ -50,10 +53,18 @@ namespace LazyProxy
                 throw new NotSupportedException("The lazy proxy is supported only for interfaces.");
             }
 
+            var interfaceType = type.IsConstructedGenericType
+                ? type.GetGenericTypeDefinition()
+                : type;
+
             // Lazy is used to guarantee the valueFactory is invoked only once.
             // More info: http://reedcopsey.com/2011/01/16/concurrentdictionarytkeytvalue-used-with-lazyt/
-            var lazy = ProxyTypes.GetOrAdd(type, t => new Lazy<Type>(() => DefineProxyType(t)));
-            return lazy.Value;
+            var lazy = ProxyTypes.GetOrAdd(interfaceType, t => new Lazy<Type>(() => DefineProxyType(t)));
+            var proxyType = lazy.Value;
+
+            return type.IsConstructedGenericType
+                ? proxyType.MakeGenericType(type.GetGenericArguments())
+                : proxyType;
         }
 
         /// <summary>
@@ -62,11 +73,27 @@ namespace LazyProxy
         /// <param name="valueFactory">The function real value returns.</param>
         /// <typeparam name="T">The interface proxy type implements.</typeparam>
         /// <returns>The lazy proxy type instance.</returns>
-        public static T CreateInstance<T>(Func<T> valueFactory)
+        public static T CreateInstance<T>(Func<T> valueFactory) where T : class
         {
-            var lazy = new Lazy<T>(valueFactory);
-            var proxyType = GetType<T>();
-            return (T) Activator.CreateInstance(proxyType, lazy);
+            return (T) CreateInstance(typeof(T), valueFactory);
+        }
+
+        /// <summary>
+        /// Creates a lazy proxy type instance using a value factory.
+        /// </summary>
+        /// <param name="type">The interface proxy type implements.</param>
+        /// <param name="valueFactory">The function real value returns.</param>
+        /// <returns>The lazy proxy type instance.</returns>
+        public static object CreateInstance(Type type, Func<object> valueFactory)
+        {
+            var proxyType = GetType(type);
+
+            // Using 'Initialize' method after the instance creation allows to improve performance
+            // because Activator.CreateInstance executed with arguments is much slower.
+            var instance = (LazyProxyBase) Activator.CreateInstance(proxyType);
+            instance.Initialize(valueFactory);
+
+            return instance;
         }
 
         /// <summary>
@@ -81,9 +108,9 @@ namespace LazyProxy
         /// {
         ///     private Lazy<IMyService> _service;
         ///
-        ///     public LazyProxyImpl_1eb94ccd79fd48af8adfbc97c76c10ff_IMyService(Lazy<IMyService> service)
+        ///     public void Initialize(Func<object> valueFactory)
         ///     {
-        ///         _service = service;
+        ///         _service = LazyBuilder.CreateInstance<IMyService>(valueFactory);
         ///     }
         ///
         ///     public void Foo() => _service.Value.Foo();
@@ -101,11 +128,11 @@ namespace LazyProxy
 
             var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
-            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public)
+            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public, typeof(LazyProxyBase))
                 .AddGenericParameters(type)
                 .AddInterface(type)
                 .AddServiceField(type, out var serviceField)
-                .AddConstructor(type, serviceField)
+                .AddInitializeMethod(type, serviceField)
                 .AddMethods(type, serviceField)
                 .CreateTypeInfo();
         }
@@ -137,18 +164,22 @@ namespace LazyProxy
             return typeBuilder;
         }
 
-        private static TypeBuilder AddConstructor(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
+        private static TypeBuilder AddInitializeMethod(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
         {
-            var constructorBuilder = typeBuilder.DefineConstructor(
-                MethodAttributes.Public,
-                CallingConventions.Standard,
-                new[] {typeof(Lazy<>).MakeGenericType(type)}
+            var methodBuilder = typeBuilder.DefineMethod(
+                "Initialize",
+                MethodAttributes.Public | MethodAttributes.Virtual,
+                null,
+                new [] { typeof(Func<object>) }
             );
 
-            var generator = constructorBuilder.GetILGenerator();
+            var createLazyMethod = CreateLazyMethod.MakeGenericMethod(type);
+
+            var generator = methodBuilder.GetILGenerator();
 
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Call, createLazyMethod);
             generator.Emit(OpCodes.Stfld, serviceField);
             generator.Emit(OpCodes.Ret);
 

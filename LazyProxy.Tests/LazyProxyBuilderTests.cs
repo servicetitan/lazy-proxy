@@ -364,6 +364,37 @@ namespace LazyProxy.Tests
         }
 
         [Fact]
+        public void GenericInterfacesMustBeProxiedByNonGenericMethod()
+        {
+            var arg1 = new TestArgument2();
+            var arg2 = new TestArgument();
+            var expectedResult1 = new TestArgument4();
+            var expectedResult2 = new TestArgument2();
+
+            var proxyObject = LazyProxyBuilder.CreateInstance(
+                typeof(IGenericTestService<TestArgument2, TestArgument, TestArgument4>), () =>
+                {
+                    var mock = new Mock<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>(
+                        MockBehavior.Strict);
+
+                    mock.Setup(s => s.Method1(arg1, arg2)).Returns(expectedResult1);
+                    mock.Setup(s => s.Method2(arg1, arg2)).Returns(expectedResult2);
+
+                    return mock.Object;
+                });
+
+            var proxy = proxyObject as IGenericTestService<TestArgument2, TestArgument, TestArgument4>;
+
+            Assert.NotNull(proxy);
+
+            var actualResult1 = proxy.Method1(arg1, arg2);
+            var actualResult2 = proxy.Method2(arg1, arg2);
+
+            Assert.Equal(expectedResult1, actualResult1);
+            Assert.Equal(expectedResult2, actualResult2);
+        }
+
+        [Fact]
         public void GenericInterfaceWithDifferentTypeParametersMustBeCreatedWithoutExceptions()
         {
             var exception = Record.Exception(() =>
