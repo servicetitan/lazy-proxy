@@ -179,7 +179,7 @@ namespace LazyProxy
 
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Callvirt, createLazyMethod);
+            generator.Emit(OpCodes.Call, createLazyMethod);
             generator.Emit(OpCodes.Stfld, serviceField);
             generator.Emit(OpCodes.Ret);
 
@@ -220,7 +220,7 @@ namespace LazyProxy
                     generator.Emit(OpCodes.Ldarg, i);
                 }
 
-                generator.Emit(OpCodes.Call, method);
+                generator.Emit(OpCodes.Callvirt, method);
                 generator.Emit(OpCodes.Ret);
 
                 typeBuilder.DefineMethodOverride(methodBuilder, method);
