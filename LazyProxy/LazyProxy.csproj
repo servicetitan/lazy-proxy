@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.1.5</Version>
+    <Version>0.1.4</Version>
     <PackageId>LazyProxy</PackageId>
     <Title>Dynamic Lazy Proxy</Title>
     <Company>ServiceTitan, Inc.</Company>
     <Authors>ServiceTitan, Inc.</Authors>
-    <Copyright>Copyright 2019 ServiceTitan, Inc.</Copyright>
+    <Copyright>Copyright ServiceTitan, Inc.</Copyright>
     <PackageProjectUrl>https://github.com/servicetitan/lazy-proxy</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/servicetitan/lazy-proxy/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/servicetitan/lazy-proxy</RepositoryUrl>
