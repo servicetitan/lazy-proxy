@@ -25,8 +25,14 @@ namespace LazyProxy
         private static readonly ConcurrentDictionary<Type, Lazy<Type>> ProxyTypes =
             new ConcurrentDictionary<Type, Lazy<Type>>();
 
-        private static readonly MethodInfo CreateLazyMethod = typeof(LazyBuilder)
-            .GetMethod("CreateInstance", BindingFlags.Public | BindingFlags.Static);
+        private static readonly MethodInfo CreateLazyMethod = typeof(LazyProxyImplementation)
+            .GetMethod(nameof(LazyProxyImplementation.CreateInstance), BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly MethodInfo DisposeLazyMethod = typeof(LazyProxyImplementation)
+            .GetMethod(nameof(LazyProxyImplementation.DisposeInstance), BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly MethodInfo DisposeMethod = typeof(IDisposable)
+            .GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
 
         /// <summary>
         /// Defines at runtime a class that implements interface T
@@ -89,7 +95,7 @@ namespace LazyProxy
             var proxyType = GetType(type);
 
             // Using 'Initialize' method after the instance creation allows to improve performance
-            // because Activator.CreateInstance executed with arguments is much slower.
+            // because Activator.CreateInstance method performance is much worse with arguments.
             var instance = (LazyProxyBase) Activator.CreateInstance(proxyType);
             instance.Initialize(valueFactory);
 
@@ -134,6 +140,7 @@ namespace LazyProxy
                 .AddServiceField(type, out var serviceField)
                 .AddInitializeMethod(type, serviceField)
                 .AddMethods(type, serviceField)
+                .AddDisposeMethodIfNeeded(type, serviceField)
                 .CreateTypeInfo();
         }
 
@@ -167,8 +174,8 @@ namespace LazyProxy
         private static TypeBuilder AddInitializeMethod(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
         {
             var methodBuilder = typeBuilder.DefineMethod(
-                "Initialize",
-                MethodAttributes.Public | MethodAttributes.Virtual,
+                nameof(LazyProxyBase.Initialize),
+                MethodAttributes.Family | MethodAttributes.Virtual,
                 null,
                 new [] { typeof(Func<object>) }
             );
@@ -229,6 +236,35 @@ namespace LazyProxy
             return typeBuilder;
         }
 
+        private static TypeBuilder AddDisposeMethodIfNeeded(this TypeBuilder typeBuilder, Type type, FieldInfo serviceField)
+        {
+            if (!DisposableInterface.IsAssignableFrom(type)) {
+                return typeBuilder;
+            }
+
+            var methodBuilder = typeBuilder.DefineMethod(
+                DisposeMethod.Name,
+                MethodAttributes.Public | MethodAttributes.Virtual,
+                DisposeMethod.ReturnType,
+                Array.Empty<Type>()
+            );
+
+            var disposeLazyMethod = DisposeLazyMethod.MakeGenericMethod(type);
+
+            var generator = methodBuilder.GetILGenerator();
+
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldfld, serviceField);
+            generator.Emit(OpCodes.Call, disposeLazyMethod);
+            generator.Emit(OpCodes.Ret);
+
+            typeBuilder.DefineMethodOverride(methodBuilder, DisposeMethod);
+
+            return typeBuilder;
+        }
+
+        private static readonly Type DisposableInterface = typeof(IDisposable);
+
         private static IEnumerable<MethodInfo> GetMethods(Type type)
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
@@ -236,6 +272,8 @@ namespace LazyProxy
             return type.GetMethods(flags)
                 .Concat(type.GetInterfaces()
                     .SelectMany(@interface => @interface.GetMethods(flags)))
+                .Where(method =>
+                    !DisposableInterface.IsAssignableFrom(type) || method.Name != nameof(IDisposable.Dispose))
                 .Distinct();
         }
 
