@@ -11,6 +11,6 @@ namespace LazyProxy
         /// Initializes inner <see cref="Lazy{T}"/> instance with the valueFactory provided.
         /// </summary>
         /// <param name="valueFactory">Function that returns a value.</param>
-        public abstract void Initialize(Func<object> valueFactory);
+        protected internal abstract void Initialize(Func<object> valueFactory);
     }
 }
