@@ -21,7 +21,7 @@ namespace LazyProxy
         /// <summary>
         /// Disposes an instance owned by <see cref="Lazy{T}"/> if any.
         /// </summary>
-        /// <param name="instanceOwner"><see cref="Lazy{T}"/> object .</param>
+        /// <param name="instanceOwner"><see cref="Lazy{T}"/> object.</param>
         /// <typeparam name="T">Type of lazy value. It must implement <see cref="IDisposable"/> interface.</typeparam>
         public static void DisposeInstance<T>(Lazy<T> instanceOwner)
             where T: IDisposable

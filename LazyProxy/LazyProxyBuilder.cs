@@ -31,8 +31,11 @@ namespace LazyProxy
         private static readonly MethodInfo DisposeLazyMethod = typeof(LazyProxyImplementation)
             .GetMethod(nameof(LazyProxyImplementation.DisposeInstance), BindingFlags.Public | BindingFlags.Static);
 
-        private static readonly MethodInfo DisposeMethod = typeof(IDisposable)
+        private static readonly Type DisposableInterface = typeof(IDisposable);
+
+        private static readonly MethodInfo DisposeMethod = DisposableInterface
             .GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
+
 
         /// <summary>
         /// Defines at runtime a class that implements interface T
@@ -263,17 +266,15 @@ namespace LazyProxy
             return typeBuilder;
         }
 
-        private static readonly Type DisposableInterface = typeof(IDisposable);
-
         private static IEnumerable<MethodInfo> GetMethods(Type type)
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
+            var isDisposable = DisposableInterface.IsAssignableFrom(type);
             return type.GetMethods(flags)
                 .Concat(type.GetInterfaces()
                     .SelectMany(@interface => @interface.GetMethods(flags)))
-                .Where(method =>
-                    !DisposableInterface.IsAssignableFrom(type) || method.Name != nameof(IDisposable.Dispose))
+                .Where(method => !isDisposable || method.Name != nameof(IDisposable.Dispose))
                 .Distinct();
         }
 
