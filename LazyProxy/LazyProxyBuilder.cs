@@ -178,7 +178,7 @@ namespace LazyProxy
         {
             var methodBuilder = typeBuilder.DefineMethod(
                 nameof(LazyProxyBase.Initialize),
-                MethodAttributes.Family | MethodAttributes.Virtual,
+                MethodAttributes.Family | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.Virtual,
                 null,
                 new [] { typeof(Func<object>) }
             );
@@ -209,7 +209,7 @@ namespace LazyProxy
 
                 var methodBuilder = typeBuilder.DefineMethod(
                     method.Name,
-                    MethodAttributes.Public | MethodAttributes.Virtual,
+                    MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.Virtual | MethodAttributes.NewSlot,
                     method.ReturnType,
                     parameterTypes
                 );
@@ -247,7 +247,7 @@ namespace LazyProxy
 
             var methodBuilder = typeBuilder.DefineMethod(
                 DisposeMethod.Name,
-                MethodAttributes.Public | MethodAttributes.Virtual,
+                MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.Virtual | MethodAttributes.NewSlot,
                 DisposeMethod.ReturnType,
                 Array.Empty<Type>()
             );
