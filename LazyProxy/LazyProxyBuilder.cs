@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -35,6 +34,12 @@ namespace LazyProxy
 
         private static readonly MethodInfo DisposeMethod = DisposableInterface
             .GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
+
+        private static readonly Type[] InitializeMethodParameterTypes = new [] {typeof(Func<object>)};
+
+        private static Type LazyProxyBaseType = typeof(LazyProxyBase);
+
+        private static Type LazyType = typeof(Lazy<>);
 
 
         /// <summary>
@@ -137,7 +142,7 @@ namespace LazyProxy
 
             var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
-            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public, typeof(LazyProxyBase))
+            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public, LazyProxyBaseType)
                 .AddGenericParameters(type)
                 .AddInterface(type)
                 .AddServiceField(type, out var serviceField)
@@ -168,7 +173,7 @@ namespace LazyProxy
         {
             serviceField = typeBuilder.DefineField(
                 ServiceFieldName,
-                typeof(Lazy<>).MakeGenericType(type),
+                LazyType.MakeGenericType(type),
                 FieldAttributes.Private);
 
             return typeBuilder;
@@ -180,7 +185,7 @@ namespace LazyProxy
                 nameof(LazyProxyBase.Initialize),
                 MethodAttributes.Family | MethodAttributes.Virtual,
                 null,
-                new [] { typeof(Func<object>) }
+                InitializeMethodParameterTypes
             );
 
             var createLazyMethod = CreateLazyMethod.MakeGenericMethod(type);
@@ -203,9 +208,12 @@ namespace LazyProxy
 
             foreach (var method in methods)
             {
-                var parameterTypes = method.GetParameters()
-                    .Select(p => p.ParameterType)
-                    .ToArray();
+                var parameterInfos = method.GetParameters();
+                var parameterTypes = new Type[parameterInfos.Length];
+                for (int i = 0; i < parameterInfos.Length; i++)
+                {
+                    parameterTypes[i] = parameterInfos[i].ParameterType;
+                }
 
                 var methodBuilder = typeBuilder.DefineMethod(
                     method.Name,
@@ -271,11 +279,26 @@ namespace LazyProxy
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
             var isDisposable = DisposableInterface.IsAssignableFrom(type);
-            return type.GetMethods(flags)
-                .Concat(type.GetInterfaces()
-                    .SelectMany(@interface => @interface.GetMethods(flags)))
-                .Where(method => !isDisposable || method.Name != nameof(IDisposable.Dispose))
-                .Distinct();
+
+            var result = new HashSet<MethodInfo>();
+            foreach (var methodInfo in type.GetMethods())
+            {
+                if (!isDisposable || methodInfo.Name != nameof(IDisposable.Dispose))
+                {
+                    result.Add(methodInfo);
+                }
+            }
+            foreach (var @interface in type.GetInterfaces())
+            {
+                foreach (var methodInfo in @interface.GetMethods(flags))
+                {
+                    if (!isDisposable || methodInfo.Name != nameof(IDisposable.Dispose))
+                    {
+                        result.Add(methodInfo);
+                    }
+                }
+            }
+            return result;
         }
 
         private static MethodInfo GetGetServiceValueMethod(FieldInfo serviceField)
@@ -290,9 +313,12 @@ namespace LazyProxy
         {
             var genericParameters = getGenericParameters();
 
-            var genericParametersNames = genericParameters
-                .Select(genericType => genericType.Name)
-                .ToArray();
+
+            var genericParametersNames = new string [genericParameters.Count];
+            for (int i = 0; i < genericParameters.Count; i++)
+            {
+                genericParametersNames[i] = genericParameters[i].Name;
+            }
 
             var definedGenericParameters = defineGenericParameters(genericParametersNames);
 
