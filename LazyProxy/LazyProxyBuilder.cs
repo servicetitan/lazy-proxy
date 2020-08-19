@@ -36,6 +36,11 @@ namespace LazyProxy
         private static readonly MethodInfo DisposeMethod = DisposableInterface
             .GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
 
+        private static readonly Type[] InitializeMethodParameterTypes = {typeof(Func<object>)};
+
+        private static readonly Type LazyProxyBaseType = typeof(LazyProxyBase);
+
+        private static readonly Type LazyType = typeof(Lazy<>);
 
         /// <summary>
         /// Defines at runtime a class that implements interface T
@@ -137,7 +142,7 @@ namespace LazyProxy
 
             var typeName = $"{type.Namespace}.{LazyProxyTypeSuffix}_{guid}_{type.Name}";
 
-            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public, typeof(LazyProxyBase))
+            return ModuleBuilder.DefineType(typeName, TypeAttributes.Public, LazyProxyBaseType)
                 .AddGenericParameters(type)
                 .AddInterface(type)
                 .AddServiceField(type, out var serviceField)
@@ -168,7 +173,7 @@ namespace LazyProxy
         {
             serviceField = typeBuilder.DefineField(
                 ServiceFieldName,
-                typeof(Lazy<>).MakeGenericType(type),
+                LazyType.MakeGenericType(type),
                 FieldAttributes.Private);
 
             return typeBuilder;
@@ -180,7 +185,7 @@ namespace LazyProxy
                 nameof(LazyProxyBase.Initialize),
                 MethodAttributes.Family | MethodAttributes.Virtual,
                 null,
-                new [] { typeof(Func<object>) }
+                InitializeMethodParameterTypes
             );
 
             var createLazyMethod = CreateLazyMethod.MakeGenericMethod(type);
