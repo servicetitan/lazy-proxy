@@ -36,12 +36,11 @@ namespace LazyProxy
         private static readonly MethodInfo DisposeMethod = DisposableInterface
             .GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
 
-        private static readonly Type[] InitializeMethodParameterTypes = new [] {typeof(Func<object>)};
+        private static readonly Type[] InitializeMethodParameterTypes = {typeof(Func<object>)};
 
-        private static Type LazyProxyBaseType = typeof(LazyProxyBase);
+        private static readonly Type LazyProxyBaseType = typeof(LazyProxyBase);
 
-        private static Type LazyType = typeof(Lazy<>);
-
+        private static readonly Type LazyType = typeof(Lazy<>);
 
         /// <summary>
         /// Defines at runtime a class that implements interface T
