@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -208,12 +209,9 @@ namespace LazyProxy
 
             foreach (var method in methods)
             {
-                var parameterInfos = method.GetParameters();
-                var parameterTypes = new Type[parameterInfos.Length];
-                for (int i = 0; i < parameterInfos.Length; i++)
-                {
-                    parameterTypes[i] = parameterInfos[i].ParameterType;
-                }
+                var parameterTypes = method.GetParameters()
+                    .Select(p => p.ParameterType)
+                    .ToArray();
 
                 var methodBuilder = typeBuilder.DefineMethod(
                     method.Name,
@@ -279,26 +277,11 @@ namespace LazyProxy
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
             var isDisposable = DisposableInterface.IsAssignableFrom(type);
-
-            var result = new HashSet<MethodInfo>();
-            foreach (var methodInfo in type.GetMethods())
-            {
-                if (!isDisposable || methodInfo.Name != nameof(IDisposable.Dispose))
-                {
-                    result.Add(methodInfo);
-                }
-            }
-            foreach (var @interface in type.GetInterfaces())
-            {
-                foreach (var methodInfo in @interface.GetMethods(flags))
-                {
-                    if (!isDisposable || methodInfo.Name != nameof(IDisposable.Dispose))
-                    {
-                        result.Add(methodInfo);
-                    }
-                }
-            }
-            return result;
+            return type.GetMethods(flags)
+                .Concat(type.GetInterfaces()
+                    .SelectMany(@interface => @interface.GetMethods(flags)))
+                .Where(method => !isDisposable || method.Name != nameof(IDisposable.Dispose))
+                .Distinct();
         }
 
         private static MethodInfo GetGetServiceValueMethod(FieldInfo serviceField)
@@ -313,12 +296,9 @@ namespace LazyProxy
         {
             var genericParameters = getGenericParameters();
 
-
-            var genericParametersNames = new string [genericParameters.Count];
-            for (int i = 0; i < genericParameters.Count; i++)
-            {
-                genericParametersNames[i] = genericParameters[i].Name;
-            }
+            var genericParametersNames = genericParameters
+                .Select(genericType => genericType.Name)
+                .ToArray();
 
             var definedGenericParameters = defineGenericParameters(genericParametersNames);
 
