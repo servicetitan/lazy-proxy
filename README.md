@@ -56,6 +56,8 @@ Also dynamic lazy proxy allows injection of circular dependencies.
 
 [Lazy injection for Unity container](https://github.com/servicetitan/lazy-proxy-unity)
 
+[Lazy injection for Autofac container](https://github.com/servicetitan/lazy-proxy-autofac)
+
 ## License
 
 This project is licensed under the Apache License, Version 2.0. - see the [LICENSE](https://github.com/servicetitan/lazy-proxy/blob/master/LICENSE) file for details.
