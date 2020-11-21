@@ -1,4 +1,4 @@
-# Dynamic lazy proxy
+# Dynamic Lazy Proxy
 
 A dynamic lazy proxy is a class built in real time, that implemenets some interface `T`, takes to the constructor an argument `Lazy<T>` and routes all invocations to the corresponding method or property of this argument.
 
