@@ -1,37 +1,83 @@
-# Dynamic Lazy Proxy
+# LazyProxy
 
-A dynamic lazy proxy is a class built in real time, that implemenets some interface `T`, takes to the constructor an argument `Lazy<T>` and routes all invocations to the corresponding method or property of this argument.
+`LazyProxy` is a lightweight library allowed to build at runtime a lazy proxy type for some interface `T`. The proxy type implements this interface and is initialized by the `Lazy<T>` argument. All method and property invocations route to the corresponding members of the lazy's `Value`.
 
-The real instance wrapped by `Lazy<T>` is created only after the first invocation of method or property. It allows to distribute the loading from the class creation to the method or property invocation.
+For illustration, assume there is the following interface:
 
-```C#
+```CSharp
 public interface IMyService
 {
-	void Foo();
+    void Foo();
+}
+```
+
+Then the generated lazy proxy type looks like this:
+
+```CSharp
+// In reality, the implementation is a little more complicated,
+// but the details are omitted for ease of understanding.
+public class LazyProxyImpl_IMyService : IMyService
+{
+    private Lazy<IMyService> _service;
+
+    public LazyProxyImpl_IMyService(Lazy<IMyService> service)
+    {
+        _service = service;
+    }
+
+    public void Foo() => _service.Value.Foo();
+}
+```
+
+## Get Packages
+
+The library provides in NuGet.
+
+```
+Install-Package LazyProxy
+```
+
+## Get Started
+
+Consider the following service:
+
+```CSharp
+public interface IMyService
+{
+    void Foo();
 }
 
 public class MyService : IMyService
 {
-	public MyService() => Console.WriteLine("Hello from ctor");
-	public void Foo() => Console.WriteLine("Hello from Foo");
+    public MyService() => Console.WriteLine("Ctor");
+    public void Foo() => Console.WriteLine("Foo");
 }
-
-var proxy = LazyProxyBuilder.CreateLazyProxyInstance<IMyService>(() =>
-{
-	Console.WriteLine("The real instance creation...");
-	return new MyService();
-});
-
-Console.WriteLine("Foo execution...");
-proxy.Foo();
-
-// Foo execution...
-// The real instance creation...
-// Hello from ctor
-// Hello from Foo
 ```
 
-The following is supported:
+A lazy proxy instance for this service can be created like this:
+
+```CSharp
+var lazyProxy = LazyProxyBuilder.CreateInstance<IMyService>(() =>
+{
+    Console.WriteLine("Creating an instance of the real service...");
+    return new MyService();
+});
+
+Console.WriteLine("Executing the 'Foo' method...");
+lazyProxy.Foo();
+```
+
+The output for this example:
+```
+Executing the 'Foo' method...
+Creating an instance of the real service...
+Ctor
+Foo
+```
+
+## Features
+
+Currently, `LazyProxy` supports the following:
 - Void/Result methods;
 - Async methods;
 - Generic methods;
@@ -46,13 +92,11 @@ The following is supported:
 **Not supported yet:**
 - Events
 
-## Lazy injection for IoC containers
+## Lazy Dependency Injection
 
-A dynamic lazy proxy can be used for IoC containers to change the resolving behaviour.
+Lazy proxies can be used for IoC containers to improve performance by changing the resolve behavior.
 
-Dependencies registered as lazy are created as dynamic proxy objects built in real time, but the real classes are resolved only after the first execution of proxy method or property.
-
-Also dynamic lazy proxy allows injection of circular dependencies.
+More info can be found in this article: https://dev.to/hypercodeplace/lazy-dependency-injection-37en
 
 [Lazy injection for Unity container](https://github.com/servicetitan/lazy-proxy-unity)
 
