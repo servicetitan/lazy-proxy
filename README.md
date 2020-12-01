@@ -68,6 +68,7 @@ lazyProxy.Foo();
 ```
 
 The output for this example:
+
 ```
 Executing the 'Foo' method...
 Creating an instance of the real service...
@@ -96,7 +97,7 @@ Currently, `LazyProxy` supports the following:
 
 Lazy proxies can be used for IoC containers to improve performance by changing the resolve behavior.
 
-More info can be found in this article: https://dev.to/hypercodeplace/lazy-dependency-injection-37en
+More info can be found in the article about [Lazy Dependency Injection for .NET](https://dev.to/hypercodeplace/lazy-dependency-injection-37en).
 
 [Lazy injection for Unity container](https://github.com/servicetitan/lazy-proxy-unity)
 
