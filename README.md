@@ -1,6 +1,6 @@
 # LazyProxy
 
-`LazyProxy` is a lightweight library allowed to build at runtime a lazy proxy type for some interface `T`. The proxy type implements this interface and is initialized by the `Lazy<T>` argument. All method and property invocations route to the corresponding members of the lazy's `Value`.
+`LazyProxy` is a lightweight library allowing to build a lazy proxy type for some interface `T` at runtime. The proxy type implements this interface and is initialized by the `Lazy<T>` argument. All method and property invocations route to the corresponding members of the lazy's `Value`.
 
 For illustration, assume there is the following interface:
 
@@ -95,7 +95,7 @@ Currently, `LazyProxy` supports the following:
 
 ## Lazy Dependency Injection
 
-Lazy proxies can be used for IoC containers to improve performance by changing the resolve behavior.
+Lazy proxies can be used for IoC containers to improve performance by changing resolution behavior.
 
 More info can be found in the article about [Lazy Dependency Injection for .NET](https://dev.to/hypercodeplace/lazy-dependency-injection-37en).
 
