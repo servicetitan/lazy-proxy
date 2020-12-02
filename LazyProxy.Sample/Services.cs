@@ -9,7 +9,7 @@ namespace LazyProxy.Sample
 
     public class MyService : IMyService
     {
-        public MyService() => Console.WriteLine("Hello from ctor");
-        public void Foo() => Console.WriteLine("Hello from Foo");
+        public MyService() => Console.WriteLine("Ctor");
+        public void Foo() => Console.WriteLine("Foo");
     }
 }

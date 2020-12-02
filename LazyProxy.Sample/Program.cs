@@ -6,14 +6,14 @@ namespace LazyProxy.Sample
     {
         public static void Main(string[] args)
         {
-            var proxy = LazyProxyBuilder.CreateInstance<IMyService>(() =>
+            var lazyProxy = LazyProxyBuilder.CreateInstance<IMyService>(() =>
             {
-                Console.WriteLine("The real instance creation...");
+                Console.WriteLine("Creating an instance of the real service...");
                 return new MyService();
             });
 
-            Console.WriteLine("Foo execution...");
-            proxy.Foo();
+            Console.WriteLine("Executing the 'Foo' method...");
+            lazyProxy.Foo();
         }
     }
 }
