@@ -11,7 +11,7 @@ namespace LazyProxy.Tests
 
         public interface IOtherBaseArgument { }
 
-        public abstract class BaseArgument : IBaseArgument { }
+        public abstract class BaseArgument : IBaseArgument, IOtherBaseArgument { }
 
         public abstract class BaseArgument2 { }
 
@@ -58,7 +58,7 @@ namespace LazyProxy.Tests
 
         // ReSharper disable once MemberCanBePrivate.Global
         public interface IGenericTestService<T, in TIn, out TOut>
-            where T : class, IBaseArgument, new()
+            where T : class, IBaseArgument, IOtherBaseArgument, new()
             where TIn : struct
             where TOut : BaseArgument2, IBaseArgument
         {
@@ -408,7 +408,6 @@ namespace LazyProxy.Tests
                 LazyProxyBuilder.GetType(typeof(IGenericTestService<,,>));
                 LazyProxyBuilder.GetType<IGenericTestService<TestArgument2, TestArgument, TestArgument4>>();
                 LazyProxyBuilder.GetType<IGenericTestService<TestArgument3, TestArgument, TestArgument4>>();
-
             });
 
             Assert.Null(exception);
