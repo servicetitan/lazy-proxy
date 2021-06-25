@@ -312,17 +312,28 @@ namespace LazyProxy
                 definedGenericParameter.SetGenericParameterAttributes(genericParameterAttributes);
 
                 var genericParameterConstraints = genericParameter.GetGenericParameterConstraints();
+                if (!genericParameterConstraints.Any())
+                {
+                    return;
+                }
+
+                var interfaceConstraints = new List<Type>(genericParameterConstraints.Length);
 
                 foreach (var constraint in genericParameterConstraints)
                 {
                     if (constraint.IsInterface)
                     {
-                        definedGenericParameter.SetInterfaceConstraints(constraint);
+                        interfaceConstraints.Add(constraint);
                     }
                     else
                     {
                         definedGenericParameter.SetBaseTypeConstraint(constraint);
                     }
+                }
+
+                if (interfaceConstraints.Any())
+                {
+                    definedGenericParameter.SetInterfaceConstraints(interfaceConstraints.ToArray());
                 }
             }
         }

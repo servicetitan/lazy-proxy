@@ -9,11 +9,13 @@ namespace LazyProxy.Tests
     {
         public interface IBaseArgument { }
 
+        public interface IOtherBaseArgument { }
+
         public abstract class BaseArgument : IBaseArgument { }
 
         public abstract class BaseArgument2 { }
 
-        public struct TestArgument : IBaseArgument { }
+        public struct TestArgument : IBaseArgument, IOtherBaseArgument { }
 
         // ReSharper disable once MemberCanBePrivate.Global
         public class TestArgument2 : BaseArgument { }
@@ -44,6 +46,10 @@ namespace LazyProxy.Tests
             string MethodWithDefaultValue(string arg = "arg");
             string MethodWithOutValue(out string arg);
             string MethodWithRefValue(ref TestArgument arg);
+
+            void GenericMethod<T>()
+                where T : IBaseArgument, IOtherBaseArgument { }
+
             string GenericMethod<T1, T2, T3>(string arg)
                 where T1 : class, IBaseArgument, new()
                 where T2 : struct
@@ -76,7 +82,7 @@ namespace LazyProxy.Tests
         public void ExceptionMustBeThrownForBuildingProxyByClass()
         {
             Assert.Throws<NotSupportedException>(
-                () => LazyProxyBuilder.GetType<AbstractTestService>());
+                LazyProxyBuilder.GetType<AbstractTestService>);
         }
 
         [Fact]
@@ -406,6 +412,13 @@ namespace LazyProxy.Tests
             });
 
             Assert.Null(exception);
+        }
+
+        [Fact]
+        public void GenericMethodWithMultipleInterfaceConstraintsMustBeProxied()
+        {
+            var proxy = LazyProxyBuilder.CreateInstance(Mock.Of<ITestService>);
+            proxy.GenericMethod<TestArgument>();
         }
     }
 }
