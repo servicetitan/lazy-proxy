@@ -23,6 +23,7 @@ namespace LazyProxy.Tests
         // ReSharper disable once MemberCanBePrivate.Global
         public class TestArgument3 : BaseArgument { }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public class TestArgument4 : BaseArgument2, IBaseArgument { }
 
         private class TestException : Exception { }
@@ -64,10 +65,19 @@ namespace LazyProxy.Tests
         {
             TOut Method1(T arg1, TIn arg2);
             T Method2(T arg1, TIn arg2);
+            // ReSharper disable once UnusedMember.Global
             T GenericMethod<T1, T2>(TIn arg);
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
+        public interface IGenericTestService2<in TIn, in TOut>
+            where TIn : class
+            where TOut : class
+        {
+        }
+
         // ReSharper disable once UnusedMember.Global
+        // ReSharper disable once MemberCanBePrivate.Global
         public abstract class AbstractTestService { }
 
         [Fact]
@@ -416,8 +426,24 @@ namespace LazyProxy.Tests
         [Fact]
         public void GenericMethodWithMultipleInterfaceConstraintsMustBeProxied()
         {
-            var proxy = LazyProxyBuilder.CreateInstance(Mock.Of<ITestService>);
-            proxy.GenericMethod<TestArgument>();
+            var exception = Record.Exception(() =>
+            {
+                var proxy = LazyProxyBuilder.CreateInstance(Mock.Of<ITestService>);
+                proxy.GenericMethod<TestArgument>();
+            });
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void GenericInterfaceWithMultipleParameterTypesMustBeProxied()
+        {
+            var exception = Record.Exception(() =>
+            {
+                LazyProxyBuilder.CreateInstance(Mock.Of<IGenericTestService2<IBaseArgument, object>>);
+            });
+
+            Assert.Null(exception);
         }
     }
 }

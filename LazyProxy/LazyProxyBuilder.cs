@@ -314,7 +314,7 @@ namespace LazyProxy
                 var genericParameterConstraints = genericParameter.GetGenericParameterConstraints();
                 if (!genericParameterConstraints.Any())
                 {
-                    return;
+                    continue;
                 }
 
                 var interfaceConstraints = new List<Type>(genericParameterConstraints.Length);
