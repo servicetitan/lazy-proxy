@@ -235,6 +235,7 @@ namespace LazyProxy
                     generator.Emit(OpCodes.Ldarg, i);
                 }
 
+                generator.Emit(OpCodes.Tail);
                 generator.Emit(OpCodes.Callvirt, method);
                 generator.Emit(OpCodes.Ret);
 
