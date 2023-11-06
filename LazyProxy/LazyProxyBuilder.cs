@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -235,7 +235,7 @@ namespace LazyProxy
                     generator.Emit(OpCodes.Ldarg, i);
                 }
 
-                generator.Emit(OpCodes.Tail);
+                generator.Emit(OpCodes.Tailcall);
                 generator.Emit(OpCodes.Callvirt, method);
                 generator.Emit(OpCodes.Ret);
 
